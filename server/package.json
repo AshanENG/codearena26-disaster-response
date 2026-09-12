@@ -9,6 +9,7 @@
     "test": "node --test test/*.test.js",
     "test:persistence": "node scripts/check-persistence.js",
     "test:m3": "node scripts/check-m3-assessment.js",
+    "test:m4": "node scripts/check-m4-flow.js",
     "smoke:gemini": "node scripts/gemini-smoke.js",
     "seed:demo": "node scripts/seed-demo-accounts.js",
     "test:integration": "node scripts/check-persistence.js"

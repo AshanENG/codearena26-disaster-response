@@ -16,8 +16,9 @@ const reportSchema = new mongoose.Schema({
   submissionKey: { type: String },
   requestHash: { type: String, select: false },
   history: [{ _id: false, action: String, actorId: mongoose.Schema.Types.ObjectId, at: Date }],
-  status: { type: String, enum: ['submitted', 'under_review', 'confirmed', 'rejected'], default: 'submitted' },
+  status: { type: String, enum: ['submitted', 'under_review', 'confirmed', 'rejected', 'dispatched', 'resolved'], default: 'submitted' },
   locationEvidence: { type: String, enum: ['unverified'], default: 'unverified', immutable: true },
+  incidentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Incident', index: true },
   assessment: {
     status: { type: String, enum: ['pending', 'evaluated', 'failed'], default: 'pending' },
     caseSnapshot: { type: mongoose.Schema.Types.Mixed },

@@ -1,6 +1,9 @@
 # Remaining work and checkpoints
 
-## Milestone 3 checkpoint — completed ~15:45 Sri Lanka (Target was 17:30)
+## Milestone 4 checkpoint — completed ~16:30 Sri Lanka (Target was 19:30)
+Incident grouping, clarification loops, officer crew dispatch, duplicate dispatch prevention, crew photo closure, road reopening, and citizen status resolution are fully implemented and verified against real MongoDB/GridFS. Next is M5: independent weather feed replay & alerts, closure-aware Dijkstra routing, and relief desk handling.
+
+## Milestone 3 checkpoint
 Case Builder, Five Checks (Weather & Cluster SYSTEM checks, Image, Location & Risk AI checks), AI Aggregator, Failure handling and Operations UI are fully implemented and verified. All 23 unit tests pass, and persistence tests pass on real MongoDB. Next is M4: clarification loops, incident grouping, confirmed publication, and crew photo closure.
 
 ## Milestone 2 checkpoint

@@ -1,13 +1,15 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import { Report } from './models/Report.js';
+import { Incident } from './models/Incident.js';
 import path from 'node:path';
 import { authRouter, identify, requireUser, protectWrites } from './auth.js';
 import { reportsRouter } from './reports.js';
+import { incidentsRouter } from './incidents.js';
 import { evidenceStore } from './evidence.js';
 
 // Injection supports isolated HTTP contract tests; production always uses Mongoose.
-export function createApp({ reports = Report, connection = mongoose.connection, databaseConfigured = false, clientDirectory } = {}) {
+export function createApp({ reports = Report, incidents = Incident, connection = mongoose.connection, databaseConfigured = false, clientDirectory } = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.use('/api', protectWrites);
@@ -26,6 +28,7 @@ export function createApp({ reports = Report, connection = mongoose.connection, 
   }
   app.use('/api/auth', requireDatabase, authRouter());
   app.use('/api/reports', requireDatabase, identify, requireUser, reportsRouter({ reports, storage: evidenceStore(connection) }));
+  app.use('/api/incidents', requireDatabase, identify, requireUser, incidentsRouter({ incidents, reports, storage: evidenceStore(connection) }));
   // Optional single-process hosting: API and built React assets share one origin.
   // Unknown API routes must never fall through to the frontend HTML.
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));

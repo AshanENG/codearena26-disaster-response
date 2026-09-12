@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { request } from './api.js';
+import DispatchModal from './DispatchModal.jsx';
 
 export default function CaseModal({ report, onClose, onUpdated }) {
   const [evaluating, setEvaluating] = useState(false);
   const [evalError, setEvalError] = useState('');
   const [currentReport, setCurrentReport] = useState(report);
+  const [showDispatch, setShowDispatch] = useState(false);
+  const [showClarInput, setShowClarInput] = useState(false);
+  const [clarQuestion, setClarQuestion] = useState('Can nearby citizens confirm if the road is currently flooded?');
+  const [clarSuccess, setClarSuccess] = useState('');
 
   const assessment = currentReport?.assessment;
   const checks = assessment?.checks;
@@ -22,6 +27,35 @@ export default function CaseModal({ report, onClose, onUpdated }) {
       setEvalError(err.message || 'Evaluation request failed.');
     } finally {
       setEvaluating(false);
+    }
+  }
+
+  async function handleRequestClarification() {
+    if (!clarQuestion.trim()) return;
+    setEvalError('');
+    try {
+      // If report already has incidentId, post clarification to it, else create incident first
+      let incId = currentReport.incidentId;
+      if (!incId) {
+        const createInc = await request('/api/incidents', {
+          method: 'POST',
+          body: JSON.stringify({
+            title: `Clarification for ${currentReport.description.slice(0, 50)}`,
+            hazardType: 'flood',
+            severity: 'moderate',
+            reportIds: [currentReport._id],
+          }),
+        });
+        incId = createInc.incident._id;
+      }
+      await request(`/api/incidents/${incId}/clarification`, {
+        method: 'POST',
+        body: JSON.stringify({ question: clarQuestion.trim() }),
+      });
+      setClarSuccess('Clarification question broadcasted to nearby citizens.');
+      setShowClarInput(false);
+    } catch (err) {
+      setEvalError(err.message || 'Failed to request clarification.');
     }
   }
 
@@ -141,6 +175,62 @@ export default function CaseModal({ report, onClose, onUpdated }) {
               </div>
             </div>
           )}
+
+          {/* Officer Response Controls (Stage 05 & 06) */}
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">STAGE 05–06 · OFFICER ACTIONS (HUMAN CONTROL)</span>
+              <span className="text-xs text-slate-500">Authorized Officer / Admin</span>
+            </div>
+
+            {clarSuccess && (
+              <div role="status" className="p-2 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded">
+                {clarSuccess}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded text-xs font-semibold"
+                onClick={() => setShowDispatch(true)}
+              >
+                Dispatch Field Crew Unit →
+              </button>
+              <button
+                type="button"
+                className="secondary text-xs px-3.5 py-2"
+                onClick={() => setShowClarInput(prev => !prev)}
+              >
+                {showClarInput ? 'Cancel Inquiry' : 'Ask Nearby Citizens to Confirm (Need More Info)'}
+              </button>
+            </div>
+
+            {showClarInput && (
+              <div className="p-3 bg-white border border-slate-200 rounded space-y-2 mt-2">
+                <label htmlFor="clar-question-input" className="block text-xs font-semibold text-slate-800">
+                  Broadcast Clarification Question to Nearby Citizens
+                </label>
+                <input
+                  id="clar-question-input"
+                  type="text"
+                  value={clarQuestion}
+                  onChange={e => setClarQuestion(e.target.value)}
+                  className="w-full text-xs p-2 border rounded"
+                  placeholder="e.g. Can someone near Baseline Road confirm if water is still rising?"
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    className="bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-1.5 rounded font-semibold"
+                    onClick={handleRequestClarification}
+                  >
+                    Broadcast Question
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Case Builder Context (System) */}
           {snapshot && (
@@ -275,6 +365,16 @@ export default function CaseModal({ report, onClose, onUpdated }) {
           <button className="secondary" onClick={onClose}>Done</button>
         </div>
       </div>
+      {showDispatch && (
+        <DispatchModal
+          report={currentReport}
+          onClose={() => setShowDispatch(false)}
+          onDispatched={() => {
+            setClarSuccess('Operational incident created and field crew dispatched.');
+            setShowDispatch(false);
+          }}
+        />
+      )}
     </div>
   );
 }

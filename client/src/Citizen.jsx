@@ -45,8 +45,93 @@ export default function Citizen() {
     } catch (error) { setMessage({ error: true, text: `${error.message} Check your reports before changing the form. Retrying unchanged uses the same submission key.` }); }
     finally { setSaving(false); }
   }
-  const point = form.latitude.trim() && form.longitude.trim() && Math.abs(Number(form.latitude)) <= 90 && Math.abs(Number(form.longitude)) <= 180 ? { latitude: Number(form.latitude), longitude: Number(form.longitude) } : null;
+  const [clarifications, setClarifications] = useState([]);
+  const [clarResponse, setClarResponse] = useState({});
+  const [respondingId, setRespondingId] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    request('/api/incidents').then(data => {
+      if (!active) return;
+      const allClars = [];
+      for (const inc of (data.incidents || [])) {
+        for (const c of (inc.clarifications || [])) {
+          if (c.status === 'active') {
+            allClars.push({ ...c, incidentId: inc._id, incidentTitle: inc.title, ward: inc.ward?.name });
+          }
+        }
+      }
+      setClarifications(allClars);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [refresh]);
+
+  async function respondClarification(incidentId, clarId) {
+    const choice = clarResponse[clarId]?.choice || 'confirmed_hazard';
+    const comment = clarResponse[clarId]?.comment || '';
+    setRespondingId(clarId);
+    try {
+      await request(`/api/incidents/${incidentId}/clarification/${clarId}/respond`, {
+        method: 'POST',
+        body: JSON.stringify({ responseChoice: choice, comment }),
+      });
+      setClarifications(clars => clars.filter(c => c._id !== clarId));
+      setMessage({ text: 'Thank you. Your confirmation has been submitted to emergency responders.' });
+    } catch (err) {
+      setMessage({ error: true, text: err.message || 'Failed to submit response.' });
+    } finally {
+      setRespondingId(null);
+    }
+  }
+
   return <><div className="grid gap-6 lg:grid-cols-[1fr_280px]"><section className="panel"><div className="eyebrow">CITIZEN REPORTING</div><h2>What’s happening nearby?</h2><p className="muted mb-5">Report a hazard or ask for help with a photo and location. Your submission is private to you and authorized staff.</p>
+    {clarifications.length > 0 && (
+      <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="badge bg-amber-200 text-amber-900 border-amber-400 font-bold text-xs">OFFICIAL INQUIRY</span>
+          <h3 className="font-bold text-sm text-amber-950">Responders Request Local Confirmation</h3>
+        </div>
+        {clarifications.map(c => (
+          <div key={c._id} className="p-3 bg-white border border-amber-200 rounded space-y-2 text-xs">
+            <div className="font-semibold text-slate-900">{c.question}</div>
+            <div className="text-slate-500">Related to {c.incidentTitle} · Area: {c.ward}</div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {['confirmed_hazard', 'hazard_cleared', 'uncertain'].map(opt => (
+                <button
+                  key={opt}
+                  type="button"
+                  className={`text-xs px-2.5 py-1 rounded border ${
+                    (clarResponse[c._id]?.choice || 'confirmed_hazard') === opt
+                      ? 'bg-amber-600 text-white border-amber-600'
+                      : 'bg-white text-slate-700 border-slate-300'
+                  }`}
+                  onClick={() => setClarResponse(prev => ({ ...prev, [c._id]: { ...prev[c._id], choice: opt } }))}
+                >
+                  {opt === 'confirmed_hazard' ? 'Water/Hazard Present' : opt === 'hazard_cleared' ? 'Water Receded / Cleared' : 'Not Sure'}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 pt-1">
+              <input
+                type="text"
+                placeholder="Optional details (e.g., depth, passage status)..."
+                value={clarResponse[c._id]?.comment || ''}
+                onChange={e => setClarResponse(prev => ({ ...prev, [c._id]: { ...prev[c._id], comment: e.target.value } }))}
+                className="text-xs p-1.5 border rounded flex-1"
+              />
+              <button
+                type="button"
+                className="bg-amber-700 hover:bg-amber-800 text-white text-xs px-3 py-1 rounded font-semibold disabled:opacity-50"
+                disabled={respondingId === c._id}
+                onClick={() => respondClarification(c.incidentId, c._id)}
+              >
+                {respondingId === c._id ? 'Sending…' : 'Send'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
     <form onSubmit={submit} className="space-y-5"><fieldset disabled={saving} className="space-y-5">
       <div><label htmlFor="kind">I want to</label><select id="kind" value={form.kind} onChange={e => edit({ kind: e.target.value })}><option value="hazard">Report a hazard</option><option value="help">Request help</option></select></div>
       {form.kind === 'help' && <div><label htmlFor="help-category">Help needed</label><select id="help-category" value={form.helpCategory} onChange={e => edit({ helpCategory: e.target.value })}>{['rescue', 'medical', 'food', 'water', 'shelter', 'other'].map(v => <option value={v} key={v}>{v}</option>)}</select></div>}
@@ -58,6 +143,6 @@ export default function Citizen() {
       <p className="muted text-xs">GPS is device-supplied, not proof of the photo’s location. Missing photo GPS remains unknown. Reporting is supported throughout Sri Lanka; no operational coverage is implied.</p>
       <button className="primary" disabled={saving || locating}>{saving ? 'Saving report and photo…' : 'Submit report →'}</button>
     </fieldset>{message && <p role={message.error ? 'alert' : 'status'} className={message.error ? 'notice error' : 'notice'}>{message.text}</p>}</form>
-  </section><aside className="space-y-5"><section className="panel dark"><div className="eyebrow">MILESTONE 02 · EVIDENCE INTAKE</div><h3>A photo. A location. A clearer report.</h3><p>Your original photo is stored in MongoDB alongside the report reference, so it survives server restarts.</p></section><section className="panel"><span className="badge">Not implemented yet</span><h3>Assessment and response</h3><p className="muted">AI checks, confirmation, dispatch, public hazard publication and emergency alerts come in later milestones. Submitting does not summon assistance.</p></section></aside></div>
+  </section><aside className="space-y-5"><section className="panel dark"><div className="eyebrow">STAGE 01–06 · HUMAN RESPONSE CHAIN</div><h3>Verified reports. Dispatched crews.</h3><p>Reports are clustered into incidents, evaluated by AI & sensor rules, and dispatched to field crews who close hazards with photos.</p></section><section className="panel"><span className="badge bg-emerald-100 text-emerald-800">OPERATIONAL CLOSURE</span><h3>Safe hazard clearance</h3><p className="muted">When crews upload photo proof of road clearance, hazard warnings clear and public routes re-open automatically.</p></section></aside></div>
   <ReportQueue own title="My reports and help requests" refreshKey={refresh} /></>;
 }

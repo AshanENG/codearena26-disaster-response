@@ -1,6 +1,25 @@
 # Verified progress — 12 September 2026
 
-## Milestone 3 — Case Builder, Five Checks, AI Aggregator and Operations UI
+## Milestone 4 — incident grouping, clarification, dispatch & crew closure
+Implemented in the actual local clone, satisfying Topic 04 requirements (T10 #4, #5, T11 stages 05 & 06):
+- **Incident Data Model** (`server/src/models/Incident.js`): Distinct architectural separation between individual citizen submissions/evidence (`Report`) and operational events (`Incident`). Supports grouping multiple reports, centroid calculation, ward/road mapping, and bidirectional linking (`report.incidentId`).
+- **Clarification Loops (`NEED MORE INFO`)**: Officers can broadcast localized inquiry questions to citizens in the affected ward/corridor. Citizens receive the prompt on their view, submit their observation (hazard confirmed / hazard cleared / uncertain with comments), and responses update the incident audit history in real time.
+- **Officer Review & Dispatch**: Officers can group reports into an incident, mark roads as closed, and dispatch field crew units with custom instructions.
+- **Idempotent Dispatch Protection**: Backend rules prevent duplicate dispatches; attempting to re-dispatch an incident to the same crew unit or to a closed incident returns HTTP 409 Conflict.
+- **Role Enforcement on Closure**: Only the assigned field crew unit (or admin) can close an incident. Unauthorized attempts (e.g. by citizens or other responders) are rejected with HTTP 403 Forbidden.
+- **Mandatory Physical Closure Photo**: Crew closure strictly requires an authenticated multipart upload of a real completion photo (JPEG/PNG/WebP, max 5 MiB) stored in MongoDB GridFS, decoded and validated by sharp.
+- **Synchronized Status Updates**: Upon verified crew closure, the road is marked re-opened (`isRoadClosed: false`), linked citizen reports automatically transition to `status: 'resolved'`, and the public map immediately clears the hazard.
+- **Field Crew Workspace UI** (`client/src/Crew.jsx`): Dedicated workspace for responders showing active work orders, location, hazard severity, officer instructions, and an interactive resolution form with photo upload and resolution notes.
+
+### Milestone 4 checks actually run
+- `npm test`: **25/25 passed** (all API, auth, M2, M3, and M4 incident/DTO tests).
+- `npm run test:m4`: **PASSED** against real MongoDB and GridFS, testing report grouping, clarification question & citizen response, officer crew dispatch, duplicate dispatch 409 guard, citizen 403 closure rejection, crew closure with photo, road reopening, citizen status resolution, and GridFS photo streaming.
+- `npm run test:persistence`: **PASSED** against real MongoDB and GridFS.
+- `npm run build`: **PASSED** (40 modules transformed, zero build errors or warnings).
+
+### Remaining / next
+M5: Weather/river feed replay with provisional proactive area warnings, closure-aware Dijkstra routing (with explicit no-route reporting), and relief desk shelter/supply matching.
+Later: M6 versioned configuration/feedback loop, M7 final end-to-end verification and code freeze, M8 presentation deck and timed English rehearsal.
 Implemented in the actual local clone, adhering strictly to the Disaster Response brief (p10), reference flow (p11), and topics structure (p3):
 - **Case Builder (System)**: Plain backend service (`server/src/services/caseBuilder.js`) mapping coordinates to simulated Colombo & Kelani River basin wards and roads (`server/src/data/demoRegion.js`), querying stored reports from MongoDB within 200m created in the past 4 hours, and snapshotting local meteorological/hydrometric gauge conditions. Out-of-demo coordinates are clearly labelled "Outside simulated demo ward network".
 - **Weather SYSTEM Check**: Deterministic rule-based evaluation (`server/src/services/systemChecks.js`) evaluating rainfall rate (mm/h), 3-hour cumulative rainfall, and Kelani river gauge flood levels (alert, minor, major flood) to produce `supportive`, `contradictory`, or `inconclusive` signals with structured metrics.
