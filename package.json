@@ -15,7 +15,8 @@
     "start": "npm run start -w server",
     "test": "npm run test -w server",
     "test:persistence": "npm run test:persistence -w server",
-    "smoke:gemini": "npm run smoke:gemini -w server --"
+    "smoke:gemini": "npm run smoke:gemini -w server --",
+    "seed:demo": "npm run seed:demo -w server"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

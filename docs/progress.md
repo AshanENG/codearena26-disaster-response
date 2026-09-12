@@ -1,5 +1,64 @@
 # Verified progress — 12 September 2026
 
+## Milestone 3 — Case Builder, Five Checks, AI Aggregator and Operations UI
+Implemented in the actual local clone, adhering strictly to the Disaster Response brief (p10), reference flow (p11), and topics structure (p3):
+- **Case Builder (System)**: Plain backend service (`server/src/services/caseBuilder.js`) mapping coordinates to simulated Colombo & Kelani River basin wards and roads (`server/src/data/demoRegion.js`), querying stored reports from MongoDB within 200m created in the past 4 hours, and snapshotting local meteorological/hydrometric gauge conditions. Out-of-demo coordinates are clearly labelled "Outside simulated demo ward network".
+- **Weather SYSTEM Check**: Deterministic rule-based evaluation (`server/src/services/systemChecks.js`) evaluating rainfall rate (mm/h), 3-hour cumulative rainfall, and Kelani river gauge flood levels (alert, minor, major flood) to produce `supportive`, `contradictory`, or `inconclusive` signals with structured metrics.
+- **Cluster SYSTEM Check**: Plain code spatial-temporal evaluation (`server/src/services/systemChecks.js`) calculating report density using exact Haversine distance within 200m over a 4-hour window, classifying cases into `isolated`, `clustered`, or `dense_cluster`.
+- **Image AI Check**: Backend Gemini multimodal evaluation (`server/src/ai/gemini.js`) classifying disaster hazard type (`flood`, `blocked_road`, `fallen_tree`, `landslide`, `structural_damage`, `none`), severity, visual evidence bullets, and flagging/rejecting irrelevant non-disaster photos.
+- **Location AI Check**: Multimodal scene evaluation comparing environment against claimed ward/road. Strictly enforces the competition integrity rule: photos cannot prove GPS coordinates, so `locationEvidence` is permanently literal `'unknown'`.
+- **Risk AI Check**: Contextual urgency assessment rating life safety risks, vulnerable factors, road hierarchy (arterial vs residential), and rising water indicators.
+- **Hazard Aggregator AI**: Synthesizes all 5 signals (2 system checks + 3 AI checks) into one structured verdict (`confirmed`, `needs_verification`, `rejected`), `urgency` (`low`, `moderate`, `high`, `critical`), reasons, uncertainty, and `recommendedOutcome` (`published`, `area_alert`, `need_more_info`, `council_ticket`, `relief_desk`). Confidence is explicitly labelled as an uncalibrated, subjective model estimate.
+- **AI Failure Handling & Safety**: If Gemini API call fails (such as free-tier 20 req/min quota exhaustion or network timeout), the pipeline catches the error, marks the assessment status as `failed` with explicit error provenance, retains the system checks and case snapshot, and flags it for manual officer review or retry in MongoDB. Never fakes live AI output.
+- **Operations Workspace UI**: Added `CaseModal.jsx` slide-over inspection modal and assessment status chips on the Operations queue, giving officers complete visibility into the Case Builder evidence, 5-check breakdown badges (distinguishing `[SYSTEM]` from `[AI]`), aggregator verdict, reasons, uncertainty, and "Run Assessment" / "Retry Evaluation" controls.
+
+### Milestone 3 checks actually run
+- `npm test`: **23/23 passed** (including 7 new automated tests covering spatial lookups, weather rules, cluster logic, AI check schemas, location unknown contract, case builder joining, evaluation failure safety, and role enforcement).
+- `npm run test:persistence`: **Passed** against real MongoDB and GridFS.
+- `node server/scripts/check-m3-assessment.js`: **Passed** against real MongoDB and GridFS, executing the full intake-to-evaluation pipeline, testing role protection, and verifying persisted assessment and audit history.
+- `npm run smoke:gemini`: Verified live multimodal image inspection with `@google/genai` on `gemini-3.8-flash`.
+- `npm run build`: **Passed** cleanly (38 modules transformed, JS 406kB / 123kB gzip, CSS 36kB / 11kB gzip). Zero build errors or runtime exceptions.
+
+### Remaining / next
+M4: clarification loops (asking nearby citizens to confirm), incident grouping (several reports describing one incident), confirmed hazard publication, officer crew dispatch, and crew photo closure.
+Later: M5 feed replay & affected-area alerts with Dijkstra closed-edge routing, M6 relief allocation, and M7 end-to-end verification.
+Implemented in the actual local clone, preserving existing code, configuration and ownerless reports:
+- Citizen registration/login/logout; scrypt password hashes; random HttpOnly cookie sessions stored as token hashes in MongoDB with expiry.
+- Citizen-only submissions and ownership-filtered reports/photos. Officer/admin see all, relief sees help only; crew cannot read reports before assignment logic exists. Registration rejects role injection. Cross-origin/unprotected writes rejected.
+- Hazard/help requests, help category, photo preview, device GPS and manual fallback. GPS source/accuracy are stored but unverified. Missing EXIF GPS stays unknown.
+- One original JPEG/PNG/WebP per new report: 5 MiB/20MP limits, decoded byte validation, original SHA-256, private GridFS storage and submission history. Existing text-only reports preserved for staff; new anonymous JSON submissions replaced by authenticated multipart.
+- Stable submission keys with unique database index: unchanged retries return the existing report; changed evidence returns 409. Concurrent duplicates remove the losing uploaded file.
+- Leaflet private location/report maps, 10-second queue polling, pagination/type filter, staff help queue. Public hazards/alerts/routes and incident grouping remain later work.
+- Five labelled demo accounts seeded without resetting existing accounts. Random credentials remain only in ignored server/generated/demo-accounts.json; no passwords printed.
+
+### Milestone 2 checks actually run
+- Dependency installation succeeded; audit reported zero vulnerabilities.
+- npm test: **16/16 passed** (health, auth denial, CSRF/origin, redacted parse errors, validation, password hashing, roles/scopes, image decode/hash, legacy records, AI schema, static hosting).
+- npm run test:persistence: **passed against real MongoDB/GridFS**. Hazard/help uploads, exact bytes/hash, EXIF unknown, photo access restrictions, sequential AND concurrent retry deduplication, relief filtering, reconnect/session/photo persistence and logout invalidation. Only generated test records were removed.
+- Browser: real registration/photo upload, emulated device GPS, manual help, private maps, cross-account denial, officer short polling, relief scope, mobile width, session/report/photo after actual Node process restart and logout passed. GPS was browser-emulated, not a real device fix.
+- Build passed: 37 modules, approximately 393kB JS (120kB gzip), 27kB CSS (10kB gzip). No browser runtime errors observed.
+- First live upload check failed because multipart parser partsLimit=2 rejected exactly two parts. Fixed terminal-boundary allowance while retaining one file/one field limits; integration then passed.
+- Initial browser map-count assertion ran before async queue load; corrected to wait for the second map. This was a test timing issue.
+- Screenshots captured from the working app; test submissions clearly labelled TEST ONLY. No hazard accuracy claim derives from the screenshot photo used as evidence.
+
+### Remaining / next
+M3: case builder, weather/cluster rules, image/location/risk AI and reasoned aggregator. Later: incidents, clarification, authorized dispatch/closure, independent feed alerts, graph routes, relief allocation and feedback/configuration.
+Physical device GPS, EXIF-bearing real-world photo verification, AI failure review/retry UI, public deployment, verified coverage and real-world safety remain unverified/unimplemented. Basemap needs internet; no routing is supplied.
+GridFS/report writes are not one transaction: abrupt crash between writes can orphan a file; normal error paths clean up and metadata retains owner/submission IDs. Multi-instance rate limiting and deployment proxy/HTTPS hardening remain future checks.
+No commits/push/deployment/paid-service activation performed by this continuation.
+
+## Latest verification — approximately 13:05 Sri Lanka
+**M1 foundation gates passed locally.** This section supersedes the earlier setup blockers below, which are retained as history.
+- MONGODB_URI, GEMINI_API_KEY and GEMINI_MODEL were present; values were not displayed. server/.env is ignored by Git.
+- Real MongoDB HTTP persistence script passed after application/database reconnection.
+- Live browser test submitted a report, found it in Operations, refreshed, terminated/restarted the Node server, and found the same report again. Only the test-created report was removed.
+- Initial Gemini generateContent calls returned HTTP 404. Migrated the backend adapter to the official SDK Interactions API and changed only GEMINI_MODEL in the ignored env file to gemini-3.8-flash. API key/URI were preserved.
+- Normal npm run smoke:gemini command passed with the existing application screenshot as deliberately irrelevant evidence. Live output: hazard none, locationEvidence unknown, schema valid. This proves live image transport/structured output, not flood-detection accuracy or the future five-check pipeline.
+- Interactions requests set store=false; timeout is configured. No public Gemini route, paid service activation or fabricated response was added.
+- npm test passed: 9/9. Build and final whitespace checks are recorded for this continuation.
+- Next: M2 citizen photo/GPS hazard/help requests, durable image storage, Leaflet queue and ownership/role foundation. Public deployment remains unverified; dev-mode sandbox restriction remains.
+- About 17 hours remain before 13 Sep 06:00. Protect four rehearsal/deck hours and submission buffer; use the revised plan.
+
 ## Inspection and source review
 - Read all 13 pages of Topics PDF and all 17 pages of Final PPT; inspected rendered pages and enlarged Disaster Response brief/reference flow. Requirements cite physical pages, since briefing footers differ.
 - User clone C:/Users/ravin/Documents/codearena26-disaster-response was clean main at initial commit 1ebe2d8 with only README/.gitignore and no AGENTS.md.
@@ -28,7 +87,7 @@
 Contract stubs and schema tests are explicitly not evidence of real persistence or live AI. Browser tests used the actual disconnected backend, not fake saved reports.
 
 ## Earliest incomplete milestone and next task
-**M1 remains incomplete.** Configure a real MongoDB in server/.env and run persistence check, then manually save/refresh/restart. Configure an existing permitted Gemini key and an available image-input/structured-output model; run the image smoke command with a real image. Do not paste secrets into chat. Google AI Pro does not prove API quota.
+Historical state at the first inspection: M1 was incomplete because MongoDB and Gemini were unconfigured. Both local integration gates now pass as recorded above. Google AI Pro alone is not proof of API quota; actual API calls were tested.
 
 Next after these gates: M2 photo/GPS hazard/help reporting, durable evidence storage decision, Leaflet and queue with ownership/roles. All integrated checks, incidents, alerts/routes, dispatch/closure, relief and feedback are still planned. Their complete matrix is in requirements.md.
 

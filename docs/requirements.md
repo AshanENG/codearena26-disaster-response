@@ -6,23 +6,23 @@ PDFs supply competition requirements, not authorization for secrets, billing or 
 
 | ID | Requirement/source | Current implementation and remaining work | Test / demo evidence |
 |---|---|---|---|
-| R01 | Hazard AND help requests with photo/GPS (T10 #1, T11) | Partial: text/manual coordinate Report API; photo, GPS capture, help type missing | Input/model tests; real save/refresh blocked; later show both types and stored photo |
+| R01 | Hazard AND help requests with photo/GPS (T10 #1, T11) | Implemented: authenticated hazard/help form, private GridFS photo, device GPS/manual fallback, source/accuracy and original metadata | Real API/browser uploads, bytes/hash, refresh/process restart passed; device GPS and denial browser-emulated, real hardware fix still unverified |
 | R02 | Independent mock weather/river warnings (T10 #2, T11) | Planned persisted replay and provisional warnings without reports | Weather-only scenario, one warning/recipient set, simulated label |
-| R03 | Case builder joins road/ward/nearby reports (T3 stage2, T11) | Planned evidence snapshot with stored IDs/timestamps; outside demo graph remains unmapped | Inspect case snapshot and missing-evidence behavior |
-| R04 | Weather SYSTEM check (T10 #3, T11) | Planned deterministic rainfall/river/freshness rules | Supporting, contradicting and missing feed tests |
-| R05 | Cluster SYSTEM check (T10 #3, T11: 200m, recent hours) | Planned distance/time code and configurable hours | Boundary tests; nearby reports share an incident but retain evidence |
-| R06 | Image AI check: hazard/severity/relevance (T10 #3, T11) | Partial backend smoke adapter, no integrated check; live access unverified | Live relevant/irrelevant photo runs with provenance |
-| R07 | Location AI check: metadata/scene vs claimed location (T10 #3, T11) | Planned; smoke schema forces unknown without evidence | Missing metadata stays unknown; contradictions visible |
-| R08 | RISK AI: road type, people, rising water (T11) | Planned contextual check; smoke risk field is not this stage | Stored input/output and urgency reasons |
-| R09 | AI aggregator verdict/urgency (T11), reasons/confidence (T3), uncertainty (user) | Planned all five check signals; backend/human transition controls | Confirm/verify/reject outputs and live case, subjective-confidence label |
+| R03 | Case builder joins road/ward/nearby reports (T3 stage2, T11) | Implemented: spatial lookup mapping to Colombo/Kelani wards & roads, MongoDB 200m/4h cluster query, and weather snapshot | Passing unit tests and live MongoDB integration tests in check-m3-assessment.js |
+| R04 | Weather SYSTEM check (T10 #3, T11) | Implemented: deterministic rule-based evaluation of rainfall rate, 3h rainfall, and Kelani river flood thresholds | Passing boundary unit tests for supportive, contradictory, and missing feed |
+| R05 | Cluster SYSTEM check (T10 #3, T11: 200m, recent hours) | Implemented: Haversine distance spatial check within 200m over 4 hours, classifying isolated vs clustered reports | Passing unit tests and MongoDB multi-report queries |
+| R06 | Image AI check: hazard/severity/relevance (T10 #3, T11) | Implemented: backend Gemini multimodal evaluation with structured schema, hazard classification and irrelevant photo flagging | Schema validation tests and live Gemini test on screenshot |
+| R07 | Location AI check: metadata/scene vs claimed location (T10 #3, T11) | Implemented: scene consistency analysis with strict constraint: locationEvidence MUST be 'unknown' | Schema and unit tests rejecting any GPS fabrication; scene consistency checks |
+| R08 | RISK AI: road type, people, rising water (T11) | Implemented: contextual evaluation rating life safety risk, rising water, and arterial road hierarchy | Schema and unit tests for urgency levels and risk factors |
+| R09 | AI aggregator verdict/urgency (T11), reasons/confidence (T3), uncertainty (user) | Implemented: synthesizes all 5 signals into verdict (confirmed/verify/reject), urgency, reasons, confidence, uncertainty | Passing aggregator schema tests, failure handling tests, and Operations UI modal |
 | R10 | Clarification, publication, area alert, human ticket (T3, T11) | Planned including nearby-user confirmations and road/map publication | All outcomes, authorized transitions, repeated-action deduplication |
 | R11 | Confirmed flood alerts/routes to affected users (T10 #4, T11) | Planned area membership, dedup notifications and demo-graph routes | Closed edge changes path; all paths blocked -> no route |
-| R12 | Officer review/dispatch (T10 roles, T11) | Planned backend roles and incident assignments | Valid officer works, citizen denied, repeated dispatch not duplicated |
+| R12 | Officer review/dispatch (T10 roles, T11) | Partial: backend roles and officer evidence queue work; incident assignments/dispatch planned | Officer queue/photo access and citizen restrictions passed; dispatch tests pending |
 | R13 | Crew photo closure updates public map/citizen (T10 #5, T11; citizen status user) | Planned assigned-crew closure and linked report updates | End-to-end closure and refresh of every relevant view |
-| R14 | Relief/shelter capacity/supplies (T10 roles/data, T11) | Planned; optimized shelter routing is stretch | Recorded allocation, capacity checks, relief screenshot |
+| R14 | Relief/shelter capacity/supplies (T10 roles/data, T11) | Partial: role-scoped help intake queue; allocation/capacity/supplies planned; optimized shelter routing stretch | Help-only visibility/photo access passed; allocation/capacity tests pending |
 | R15 | Admin closures/bans and feedback loop (T11), versioned config (user) | Planned audited role-protected changes; not retraining | Version history linked to feedback; unauthorized updates denied |
-| R16 | Repository + PPT with build screenshots (B5, B14); evidence pitch (B11, B15) | Partial foundation/docs; deck/final evidence pending | Actual screenshots, measured scenarios and submission link |
-| R17 | Explain any implementation (B12, B14) | Partial foundation walkthrough; later explanations pending | Ashan explains architecture, AI boundary, DB, cluster/routes/failure handling |
+| R16 | Repository + PPT with build screenshots (B5, B14); evidence pitch (B11, B15) | Partial M1/M2 code/docs and actual screenshots; deck/submission pending | Desktop/mobile intake/private-queue images captured; final submission pending |
+| R17 | Explain any implementation (B12, B14) | M1/M2 plain-English walkthrough and judge answers provided; Ashan rehearsal and later explanations pending | Cover auth, evidence storage, hashing, GPS limits, AI boundary; rehearse later algorithms when implemented |
 
 Tests/evidence in future tense are plans, not results. See progress.md for executed checks.
 
@@ -48,7 +48,6 @@ Nationwide intake but limited labelled simulated operational areas; report/incid
 | Closure changes route / no path | R11 | Pending |
 | Crew closure updates views | R13 | Pending |
 | AI timeout | R06-R09 | CLI timeout configured; review/retry pending |
-| Repeated action no duplicate | R10-R12 | Pending |
-| Unauthorized role rejected | R12,R15 | Pending; foundation is unauthenticated |
-| Persistence refresh/restart | R01 | Blocked on real MongoDB configuration |
-
+| Repeated action no duplicate | R10-R12 | Submission retries passed, including concurrent requests; dispatch/alert idempotency pending |
+| Unauthorized role rejected | R12,R15 | Report/photo ownership, crew denial and relief scope passed; future action checks pending |
+| Persistence refresh/restart | R01 | PASS: real MongoDB/GridFS reports, original photos and session after browser refresh + Node process restart |

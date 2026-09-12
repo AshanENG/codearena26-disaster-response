@@ -21,3 +21,5 @@ Read docs/requirements.md, docs/decisions.md and docs/progress.md before changin
 ## Verification
 Run npm test and npm run build. npm run test:persistence requires real MongoDB. npm run smoke:gemini -- "ABSOLUTE_IMAGE_PATH" requires real API configuration and image. Stubs/schema tests do not prove live integrations. Record actual results in docs/progress.md and follow the scenario matrix. Never log environment values or raw database/provider errors.
 
+## Current foundation
+M2 adds authenticated multipart uploads and MongoDB GridFS. Preserve ownerless legacy reports for staff, never assign them to arbitrary citizens. Public registration must remain citizen-only. Do not bypass photo authorization or expose GridFS IDs as public download routes. Demo passwords live only in ignored server/generated/demo-accounts.json. The persistence command now exercises real roles, files, retries and reconnection and cleans only test-owned records.
