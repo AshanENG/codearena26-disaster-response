@@ -103,7 +103,7 @@ PORT=3001
 MONGODB_URI=mongodb://127.0.0.1:27017/disaster_response
 SESSION_SECRET=your-secure-session-secret
 GEMINI_API_KEY=your-gemini-api-key
-GEMINI_MODEL=gemini-3.8-flash
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
 ### 3. Initialize Pristine Demonstration Data
