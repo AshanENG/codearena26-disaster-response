@@ -1,0 +1,37 @@
+@import "tailwindcss";
+@theme { --font-sans: 'Segoe UI', Arial, sans-serif; }
+body { margin: 0; background: #f4f7f6; color: #183431; }
+a { text-decoration: none; }
+button, input, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, a:focus-visible { outline: 3px solid #c47623; outline-offset: 4px; }
+h1 { font-size: clamp(1.9rem, 4vw, 2.7rem); font-weight: 700; letter-spacing: -.045em; margin-bottom: .5rem; }
+h2 { font-size: 1.45rem; font-weight: 650; margin-bottom: .65rem; letter-spacing: -.025em; }
+h3 { font-size: 1.15rem; font-weight: 650; margin: .8rem 0; }
+.muted { color: #526762; line-height: 1.65; }
+.panel { background: white; border: 1px solid #dce5e1; border-radius: 18px; padding: clamp(20px, 3vw, 30px); }
+.dark { background: #163d37; color: #f0f9f5; border-color: #163d37; }
+.dark p { color: #c2d8cf; line-height: 1.7; }
+.eyebrow { font-size: .65rem; font-weight: 700; letter-spacing: .16em; margin-bottom: .8rem; color: #637c71; }
+.dark .eyebrow { color: #a7cdb8; }
+.badge { display: inline-block; background: #edf3ed; color: #3f6354; font-size: .7rem; font-weight: 600; padding: 6px 10px; border-radius: 6px; }
+.brand { background: #174b3c; color: white; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; font-size: 29px; }
+.nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 8px; color: #526762; font-size: .9rem; white-space: nowrap; }
+.nav-link:hover { background: #e8eeeb; }
+.nav-link.active { background: #174b3c; color: white; }
+label { font-size: .9rem; font-weight: 600; }
+input, textarea { display: block; width: 100%; margin-top: 8px; background: #fbfcfb; border: 1px solid #b8cac1; border-radius: 8px; padding: 12px; color: #183431; font-weight: 400; }
+input:focus, textarea:focus { outline: 2px solid #2d7862; outline-offset: 2px; }
+.primary, .secondary { border-radius: 8px; padding: 11px 17px; font-size: .85rem; font-weight: 600; }
+.primary { background: #174b3c; color: white; }
+.secondary { border: 1px solid #b9cac2; background: white; }
+.notice { padding: 14px; background: #edf6ef; border-radius: 8px; overflow-wrap: anywhere; }
+.error { background: #fff0ea; color: #8e321f; }
+.system { display: flex; align-items: center; gap: 8px; font-size: .75rem; }
+.dot { height: 7px; width: 7px; background: #b27b2b; border-radius: 50%; }
+.dot.online { background: #28815b; }
+.empty { padding-block: 50px; }
+.skip { position: fixed; top: -100px; left: 20px; background: white; padding: 12px; z-index: 10; }
+.skip:focus { top: 10px; }

@@ -1,0 +1,16 @@
+{
+  "name": "codearena26-disaster-response",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["client", "server"],
+  "engines": {"node": ">=22.18.0 <23"},
+  "scripts": {
+    "dev": "concurrently -k -n server,client \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w client",
+    "start": "npm run start -w server",
+    "test": "npm run test -w server",
+    "test:persistence": "npm run test:persistence -w server",
+    "smoke:gemini": "npm run smoke:gemini -w server --"
+  },
+  "devDependencies": {"concurrently": "^9.2.1"}
+}
