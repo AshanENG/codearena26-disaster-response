@@ -52,6 +52,36 @@ export default function Relief() {
     }
   }
 
+  function isCriticalTriage(desc = '', category = '') {
+    const text = (desc + ' ' + category).toLowerCase();
+    return /elderly|infant|baby|child|pregnant|medical|insulin|heart|oxygen|stranded|roof|drowning|trapped|disabled|stroke|urgent/.test(text);
+  }
+
+  function downloadShelterManifestCSV() {
+    if (!shelters.length) return;
+    const headers = ['ShelterID', 'Name', 'Ward', 'Status', 'CurrentOccupancy', 'MaxCapacity', 'RemainingCapacity', 'OccupancyPercent', 'Warden', 'ContactPhone'];
+    const rows = shelters.map(s => [
+      `"${s._id}"`,
+      `"${s.name}"`,
+      `"${s.wardName}"`,
+      `"${s.status}"`,
+      s.currentOccupancy,
+      s.maxCapacity,
+      s.remainingCapacity,
+      `"${s.occupancyPercentage}%"`,
+      `"${s.contactPerson}"`,
+      `"${s.contactPhone}"`
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `shelter_manifest_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   function stepIncrease() {
     if (feedStatus && feedStatus.stage < 3) {
       changeFeedStage(feedStatus.stage + 1);
@@ -230,15 +260,27 @@ export default function Relief() {
       {/* Tab 1: Shelters Grid */}
       {reliefTab === 'shelters' && (
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-bold text-base text-slate-800">Designated Evacuation Shelters</h3>
-          <button
-            type="button"
-            onClick={() => setReliefTab('requests')}
-            className="text-xs text-sky-800 font-semibold underline hover:no-underline"
-          >
-            Match Help Requests ({unassignedCount} waiting) →
-          </button>
+          <div className="flex items-center gap-3">
+            {shelters.length > 0 && (
+              <button
+                type="button"
+                onClick={downloadShelterManifestCSV}
+                className="secondary text-xs flex items-center gap-1.5"
+                title="Download shelter capacity manifest as CSV"
+              >
+                <span>📥</span> Export Manifest CSV
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setReliefTab('requests')}
+              className="text-xs text-sky-800 font-semibold underline hover:no-underline"
+            >
+              Match Help Requests ({unassignedCount} waiting) →
+            </button>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {shelters.map(shelter => {
@@ -338,6 +380,11 @@ export default function Relief() {
                       <span className="badge bg-purple-100 text-purple-800 border-purple-300 text-xs font-bold uppercase">
                         {report.helpCategory || 'Help'}
                       </span>
+                      {isCriticalTriage(report.description, report.helpCategory) && (
+                        <span className="badge bg-rose-600 text-white text-[11px] font-extrabold tracking-wide uppercase shadow-2xs animate-pulse">
+                          🚨 Critical Triage Priority
+                        </span>
+                      )}
                       <span className="text-xs font-mono text-slate-400">ID: {report._id}</span>
                       <span className="text-xs text-slate-500">
                         {new Date(report.createdAt).toLocaleTimeString()}

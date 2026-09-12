@@ -32,6 +32,31 @@ export default function ReportQueue({ title = 'Report inbox', refreshKey = 0, he
 
   const [showMap, setShowMap] = useState(true);
 
+  function downloadSitrepCSV() {
+    if (!state.reports.length) return;
+    const headers = ['ReportID', 'Kind', 'Status', 'CreatedAt', 'Latitude', 'Longitude', 'LocationSource', 'Verdict', 'Urgency', 'Description'];
+    const rows = state.reports.map(r => [
+      `"${r._id}"`,
+      `"${r.kind}"`,
+      `"${r.status}"`,
+      `"${new Date(r.createdAt).toISOString()}"`,
+      r.latitude,
+      r.longitude,
+      `"${r.locationSource || 'manual'}"`,
+      `"${r.assessment?.aggregator?.verdict || 'pending'}"`,
+      `"${r.assessment?.aggregator?.urgency || 'pending'}"`,
+      `"${(r.description || '').replace(/"/g, '""')}"`
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `sitrep_operations_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return <section className="panel mt-6">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
@@ -40,6 +65,16 @@ export default function ReportQueue({ title = 'Report inbox', refreshKey = 0, he
         <p className="muted text-sm">{own ? 'Track your reported hazards, requests, and emergency resolution progress' : 'Newest first · auto-refreshes · 5-check AI & rule verification pipeline'}</p>
       </div>
       <div className="flex items-center gap-2">
+        {!own && state.reports.length > 0 && (
+          <button
+            type="button"
+            className="secondary text-xs flex items-center gap-1.5"
+            onClick={downloadSitrepCSV}
+            title="Download operational situation report as CSV"
+          >
+            <span>📥</span> Export Sitrep CSV
+          </button>
+        )}
         <button
           type="button"
           className="secondary text-xs"

@@ -151,7 +151,7 @@ Navigate to **http://127.0.0.1:3001**.
 The platform includes comprehensive offline unit tests, real MongoDB persistence tests, and an 8-stage end-to-end scenario runner:
 
 ```powershell
-# 1. Run all 32 offline unit, schema, security, and algorithmic tests
+# 1. Run all 36 offline unit, schema, security, and algorithmic tests
 npm test
 
 # 2. Run the complete 8-stage end-to-end integration scenario (real MongoDB & live API)

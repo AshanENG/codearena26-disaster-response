@@ -9,6 +9,7 @@ import Crew from './Crew.jsx';
 import Relief from './Relief.jsx';
 import Admin from './Admin.jsx';
 import ProfileModal from './ProfileModal.jsx';
+import { i18n } from './i18n.js';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -81,6 +82,14 @@ function App() {
   const [checking, setChecking] = useState(true);
   const [authError, setAuthError] = useState('');
   const [showProfile, setShowProfile] = useState(false);
+  const [lang, setLang] = useState(() => localStorage.getItem('rl_lang') || 'en');
+
+  const t = i18n[lang] || i18n.en;
+
+  function toggleLang(newLang) {
+    setLang(newLang);
+    try { localStorage.setItem('rl_lang', newLang); } catch {}
+  }
 
   useEffect(() => {
     const change = () => setView(allViews.find(v => `#${v.toLowerCase()}` === location.hash) || 'Citizen');
@@ -156,7 +165,7 @@ function App() {
   function content() {
     if (checking) return <p role="status" className="py-6 text-slate-500">Checking your session…</p>;
     if (!user) return <AuthPanel onUser={signedIn} />;
-    if (view === 'Citizen' && user.role === 'citizen') return <Citizen />;
+    if (view === 'Citizen' && user.role === 'citizen') return <Citizen lang={lang} t={t} />;
     if (view === 'Operations' && ['officer', 'admin'].includes(user.role)) return <ReportQueue title="Report inbox" />;
     if (view === 'Crew' && ['crew', 'officer', 'admin'].includes(user.role)) return <Crew />;
     if (view === 'Relief' && ['relief', 'officer', 'admin'].includes(user.role)) return <Relief />;
@@ -178,11 +187,31 @@ function App() {
           <a href="#citizen" className="flex items-center gap-3.5 group">
             <img src="/logo.png" alt="Resilient Lanka Emblem" className="h-12 w-auto object-contain drop-shadow-md transition-transform duration-200 group-hover:scale-105" />
             <div>
-              <span className="block font-extrabold text-xl tracking-tight text-slate-900 leading-tight">Resilient Lanka</span>
-              <span className="block text-[11px] font-semibold uppercase tracking-wider text-sky-700">Disaster Response Platform</span>
+              <span className="block font-extrabold text-xl tracking-tight text-slate-900 leading-tight">{t.platformName}</span>
+              <span className="block text-[11px] font-semibold uppercase tracking-wider text-sky-700">{t.platformSubtitle}</span>
             </div>
           </a>
           <div className="flex flex-wrap items-center gap-3">
+            {/* Bilingual Switcher */}
+            <div className="inline-flex rounded-lg p-0.5 bg-slate-100 border border-slate-200" role="group" aria-label="Language selection">
+              <button
+                type="button"
+                onClick={() => toggleLang('en')}
+                className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${lang === 'en' ? 'bg-[#113c32] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
+                title="Switch interface to English"
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleLang('si')}
+                className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${lang === 'si' ? 'bg-[#113c32] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'}`}
+                title="සිංහල භාෂාවට මාරු වන්න"
+              >
+                සිං
+              </button>
+            </div>
+
             {user && (
               <>
                 <span className="text-xs font-medium text-slate-600">
@@ -194,9 +223,9 @@ function App() {
                   onClick={() => setShowProfile(true)}
                   title="View profile, edit personal details, and change password"
                 >
-                  <span>👤</span> Profile
+                  <span>👤</span> {t.profile}
                 </button>
-                <button className="secondary text-xs py-1 px-3" onClick={signOut}>Sign out</button>
+                <button className="secondary text-xs py-1 px-3" onClick={signOut}>{t.signOut}</button>
               </>
             )}
           </div>
@@ -204,11 +233,20 @@ function App() {
       </header>
       <div className="mx-auto max-w-7xl md:grid md:grid-cols-[205px_1fr]">
         <nav aria-label="Main navigation" className="p-5 md:pt-9 flex gap-2 overflow-x-auto md:flex-col">
-          {availableViews.map(name => (
-            <a key={name} href={`#${name.toLowerCase()}`} aria-current={view === name ? 'page' : undefined} className={`nav-link ${view === name ? 'active' : ''}`}>
-              <span className="font-semibold text-sm">{name}</span>
-            </a>
-          ))}
+          {availableViews.map(name => {
+            const navLabel = ({
+              Citizen: t.citizenNav,
+              Operations: t.operationsNav,
+              Crew: t.crewNav,
+              Relief: t.reliefNav,
+              Admin: t.adminNav,
+            })[name] || name;
+            return (
+              <a key={name} href={`#${name.toLowerCase()}`} aria-current={view === name ? 'page' : undefined} className={`nav-link ${view === name ? 'active' : ''}`}>
+                <span className="font-semibold text-sm">{navLabel}</span>
+              </a>
+            );
+          })}
         </nav>
         <main id="main" className="px-5 pt-4 pb-12 md:pt-9 min-w-0">
           <div className="eyebrow">REPORT · REVIEW · RESPOND</div>

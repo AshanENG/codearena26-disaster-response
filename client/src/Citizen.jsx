@@ -3,8 +3,11 @@ import { request } from './api.js';
 import ReportMap from './ReportMap.jsx';
 import ReportQueue from './ReportQueue.jsx';
 import RoutingWidget from './RoutingWidget.jsx';
+import { i18n } from './i18n.js';
+
 const initial = () => ({ kind: 'hazard', helpCategory: 'rescue', description: '', latitude: '', longitude: '', locationSource: 'manual', gpsAccuracy: undefined });
-export default function Citizen() {
+export default function Citizen({ lang = 'en', t: propT }) {
+  const t = propT || i18n[lang] || i18n.en;
   const [form, setForm] = useState(initial);
   const [photo, setPhoto] = useState(null);
   const [preview, setPreview] = useState('');
@@ -239,7 +242,7 @@ export default function Citizen() {
             }`}
           >
             <span>📢</span>
-            <span>Report Hazard / Help</span>
+            <span>{t.tabReport}</span>
           </button>
           <button
             type="button"
@@ -253,7 +256,7 @@ export default function Citizen() {
             }`}
           >
             <span>🧭</span>
-            <span>Safe Evacuation Routes</span>
+            <span>{t.tabRoutes}</span>
           </button>
           <button
             type="button"
@@ -267,7 +270,7 @@ export default function Citizen() {
             }`}
           >
             <span>📋</span>
-            <span>My Submissions & Status</span>
+            <span>{t.tabSubmissions}</span>
           </button>
           <button
             type="button"
@@ -281,7 +284,7 @@ export default function Citizen() {
             }`}
           >
             <span>⚠️</span>
-            <span>Live Alerts & Inquiries</span>
+            <span>{t.tabAlerts}</span>
             {(alerts.length > 0 || clarifications.length > 0) && (
               <span className="bg-amber-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">
                 {alerts.length + clarifications.length}
@@ -300,7 +303,7 @@ export default function Citizen() {
             }`}
           >
             <span>🔔</span>
-            <span>My Area & Alerts</span>
+            <span>{t.tabMyArea}</span>
             {unreadCount > 0 && (
               <span className="bg-rose-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full animate-bounce">
                 {unreadCount}
@@ -314,26 +317,28 @@ export default function Citizen() {
       {activeCategory === 'report' && (
         <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
           <section className="panel">
-            <div className="eyebrow">CITIZEN REPORTING</div>
-            <h2>What’s happening nearby?</h2>
-            <p className="muted mb-5">Report a hazard or ask for help with a photo and location. Your submission is private to you and authorized staff.</p>
+            <div className="eyebrow">{t.reportingEyebrow}</div>
+            <h2>{t.formHeading}</h2>
+            <p className="muted mb-5">{t.formMuted}</p>
 
             <form onSubmit={submit} className="space-y-5">
               <fieldset disabled={saving} className="space-y-5">
                 <div>
-                  <label htmlFor="kind">I want to</label>
+                  <label htmlFor="kind">{t.descriptionLabel ? (lang === 'si' ? 'ඉදිරිපත් කිරීමේ වර්ගය' : 'I want to') : 'I want to'}</label>
                   <select id="kind" value={form.kind} onChange={e => edit({ kind: e.target.value })}>
-                    <option value="hazard">Report a hazard</option>
-                    <option value="help">Request help</option>
+                    <option value="hazard">{t.hazardType}</option>
+                    <option value="help">{t.helpType}</option>
                   </select>
                 </div>
                 {form.kind === 'help' && (
                   <div>
-                    <label htmlFor="help-category">Help needed</label>
+                    <label htmlFor="help-category">{lang === 'si' ? 'අවශ්‍ය ආධාර වර්ගය' : 'Help needed'}</label>
                     <select id="help-category" value={form.helpCategory} onChange={e => edit({ helpCategory: e.target.value })}>
-                      {['rescue', 'medical', 'food', 'water', 'shelter', 'other'].map(v => (
-                        <option value={v} key={v}>{v}</option>
-                      ))}
+                      <option value="rescue">{t.helpCategoryRescue}</option>
+                      <option value="medical">{t.helpCategoryMedical}</option>
+                      <option value="food">{t.helpCategoryFood}</option>
+                      <option value="shelter">{t.helpCategoryShelter}</option>
+                      <option value="other">{lang === 'si' ? 'වෙනත් ආධාර' : 'Other'}</option>
                     </select>
                   </div>
                 )}
@@ -377,13 +382,13 @@ export default function Citizen() {
                   {preview && <img className="photo-preview mt-3" src={preview} alt="Preview of your selected evidence" />}
                 </div>
                 <button className="secondary" type="button" disabled={locating} onClick={locate}>
-                  {locating ? 'Getting location…' : 'Use my current location'}
+                  {locating ? (lang === 'si' ? 'ස්ථානය ලබාගනිමින් පවතී…' : 'Getting location…') : t.detectLocation}
                 </button>
                 {gpsMessage && <p role="status" className="muted text-sm">{gpsMessage}</p>}
                 <div className="grid gap-4 sm:grid-cols-2">
                   {['latitude', 'longitude'].map(name => (
                     <div key={name}>
-                      <label className="capitalize" htmlFor={name}>{name}</label>
+                      <label className="capitalize" htmlFor={name}>{lang === 'si' ? (name === 'latitude' ? 'අක්ෂාංශය (Latitude)' : 'දේශාංශය (Longitude)') : name}</label>
                       <input
                         id={name}
                         type="number"
@@ -394,7 +399,7 @@ export default function Citizen() {
                         value={form[name]}
                         onChange={e => {
                           edit({ [name]: e.target.value, locationSource: 'manual', gpsAccuracy: undefined });
-                          setGpsMessage('Manually entered coordinates are unverified.');
+                          setGpsMessage(lang === 'si' ? 'ඇතුළත් කළ ඛණ්ඩාංක තහවුරු නොකළ ඒවා වේ.' : 'Manually entered coordinates are unverified.');
                         }}
                       />
                     </div>
@@ -402,8 +407,8 @@ export default function Citizen() {
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-700">Map Pin Location</span>
-                    <span className="text-[11px] text-slate-500">Click anywhere on the map to set coordinates</span>
+                    <span className="font-semibold text-slate-700">{lang === 'si' ? 'සිතියම මත ස්ථානය ලකුණු කරන්න' : 'Map Pin Location'}</span>
+                    <span className="text-[11px] text-slate-500">{lang === 'si' ? 'ඛණ්ඩාංක තෝරාගැනීමට සිතියම මත ක්ලික් කරන්න' : 'Click anywhere on the map to set coordinates'}</span>
                   </div>
                   <ReportMap
                     point={point}
@@ -416,7 +421,7 @@ export default function Citizen() {
                 </div>
                 <p className="muted text-xs">GPS is device-supplied, not proof of the photo’s location. Missing photo GPS remains unknown. Reporting is supported throughout Sri Lanka; no operational coverage is implied.</p>
                 <button className="primary" disabled={saving || locating}>
-                  {saving ? 'Saving report and photo…' : 'Submit report →'}
+                  {saving ? t.submitting : t.submitReport}
                 </button>
               </fieldset>
               {message && (
@@ -455,12 +460,12 @@ export default function Citizen() {
       {activeCategory === 'routes' && (
         <div className="space-y-4">
           <div className="panel bg-white">
-            <div className="eyebrow">EMERGENCY NAVIGATION</div>
-            <h2>Closure-Aware Safe Evacuation Routes</h2>
+            <div className="eyebrow">{lang === 'si' ? 'හදිසි ආපදා සංචාලනය' : 'EMERGENCY NAVIGATION'}</div>
+            <h2>{t.routingTitle}</h2>
             <p className="muted text-sm mb-4">
-              Real-time Dijkstra shortest-path calculations across Colombo corridors. Closed road segments are dynamically excluded with safe detour alternatives.
+              {t.routingDesc}
             </p>
-            <RoutingWidget />
+            <RoutingWidget lang={lang} t={t} />
           </div>
         </div>
       )}
@@ -476,33 +481,33 @@ export default function Citizen() {
       {activeCategory === 'alerts' && (
         <div className="space-y-6">
           <section className="panel">
-            <div className="eyebrow">CIVIL DEFENCE & HYDROLOGY</div>
-            <h2>Active Alerts & River Gauge Warnings</h2>
+            <div className="eyebrow">{t.alertsEyebrow}</div>
+            <h2>{t.alertsHeading}</h2>
             <p className="muted text-sm mb-4">
-              Simulated Kelani Ganga basin flood warnings and official responder requests for ground verification.
+              {t.alertsSubheading}
             </p>
 
             {alertFeedStatus === 'unavailable' ? (
               <div className="p-6 bg-amber-50 border border-amber-300 rounded-xl space-y-2">
                 <div className="flex items-center gap-2 text-amber-900 font-bold text-sm">
                   <span>⚠️</span>
-                  <h4>Live Sensor Telemetry Feed Offline</h4>
+                  <h4>{lang === 'si' ? 'සංවේදක දත්ත විසන්ධි වී ඇත' : 'Live Sensor Telemetry Feed Offline'}</h4>
                 </div>
                 <p className="text-xs text-amber-800">
-                  Automated river gauge and rainfall station telemetry is temporarily unavailable. Do not assume corridors are clear. Responders are continuing manual field monitoring.
+                  {lang === 'si' ? 'ස්වයංක්‍රීය ගංගා ජල මට්ටම් සහ වර්ෂාපතන දත්ත තාවකාලිකව ලබාගත නොහැක.' : 'Automated river gauge and rainfall station telemetry is temporarily unavailable. Do not assume corridors are clear. Responders are continuing manual field monitoring.'}
                 </p>
               </div>
             ) : alerts.length === 0 && clarifications.length === 0 ? (
               <div className="p-8 text-center bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                 <span className="text-2xl">🛡️</span>
-                <h4 className="font-bold text-slate-800 text-sm">All Clear in Monitored Corridors</h4>
-                <p className="muted text-xs">There are currently no active river flood breaches or open responder inquiries in your zone.</p>
+                <h4 className="font-bold text-slate-800 text-sm">{t.allClearTitle}</h4>
+                <p className="muted text-xs">{t.allClearDesc}</p>
               </div>
             ) : (
               <>
                 {alerts.length > 0 && (
                   <div className="mb-6 space-y-3">
-                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Hydrological Warnings ({alerts.length})</h3>
+                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">{lang === 'si' ? 'ක්‍රියාකාරී ගංවතුර අනතුරු ඇඟවීම්' : 'Hydrological Warnings'} ({alerts.length})</h3>
                     {alerts.map(a => (
                       <div
                         key={a._id || a.title}
@@ -524,12 +529,12 @@ export default function Citizen() {
                                 : 'bg-sky-200 text-sky-900 border-sky-400'
                             }`}
                           >
-                            {a.severity === 'danger' ? 'CRITICAL DANGER' : a.severity === 'warning' ? 'FLOOD WARNING' : 'ADVISORY'}
+                            {a.severity === 'danger' ? (lang === 'si' ? 'අධි අවදානම්' : 'CRITICAL DANGER') : a.severity === 'warning' ? (lang === 'si' ? 'ගංවතුර අනතුරු ඇඟවීම' : 'FLOOD WARNING') : (lang === 'si' ? 'විශේෂ නිවේදනය' : 'ADVISORY')}
                           </span>
                           <h3 className="font-bold text-sm">{a.title}</h3>
                         </div>
                         <div className="text-xs opacity-80 mb-2">
-                          Source: {a.source} · Trigger: {a.trigger?.stationName} ({a.trigger?.value} ft)
+                          {lang === 'si' ? 'මූලාශ්‍රය' : 'Source'}: {a.source} · {lang === 'si' ? 'මිනුම් ස්ථානය' : 'Trigger'}: {a.trigger?.stationName} ({a.trigger?.value} ft)
                         </div>
                         {a.recommendations?.length > 0 && (
                           <ul className="list-disc list-inside text-xs space-y-0.5">
@@ -546,13 +551,13 @@ export default function Citizen() {
                 {clarifications.length > 0 && (
                   <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl space-y-3">
                     <div className="flex items-center gap-2">
-                      <span className="badge bg-amber-200 text-amber-900 border-amber-400 font-bold text-xs">OFFICIAL INQUIRY</span>
-                      <h3 className="font-bold text-sm text-amber-950">Responders Request Ground Confirmation</h3>
+                      <span className="badge bg-amber-200 text-amber-900 border-amber-400 font-bold text-xs">{lang === 'si' ? 'නිල විමසීමක්' : 'OFFICIAL INQUIRY'}</span>
+                      <h3 className="font-bold text-sm text-amber-950">{t.officialInquiryTitle}</h3>
                     </div>
                     {clarifications.map(c => (
                       <div key={c._id} className="p-3 bg-white border border-amber-200 rounded-lg space-y-2 text-xs">
                         <div className="font-semibold text-slate-900">{c.question}</div>
-                        <div className="text-slate-500">Related to {c.incidentTitle} · Area: {c.ward}</div>
+                        <div className="text-slate-500">{lang === 'si' ? 'අදාළ සිද්ධිය' : 'Related to'} {c.incidentTitle} · {lang === 'si' ? 'ප්‍රදේශය' : 'Area'}: {c.ward}</div>
                         <div className="flex flex-wrap gap-2 pt-1">
                           {['confirmed_hazard', 'hazard_cleared', 'uncertain'].map(opt => (
                             <button
@@ -565,14 +570,14 @@ export default function Citizen() {
                               }`}
                               onClick={() => setClarResponse(prev => ({ ...prev, [c._id]: { ...prev[c._id], choice: opt } }))}
                             >
-                              {opt === 'confirmed_hazard' ? 'Water/Hazard Present' : opt === 'hazard_cleared' ? 'Water Receded / Cleared' : 'Not Sure'}
+                              {opt === 'confirmed_hazard' ? t.hazardPresentBtn : opt === 'hazard_cleared' ? t.hazardClearedBtn : t.notSureBtn}
                             </button>
                           ))}
                         </div>
                         <div className="flex gap-2 pt-1">
                           <input
                             type="text"
-                            placeholder="Optional details (e.g., depth, passage status)..."
+                            placeholder={lang === 'si' ? 'අමතර තොරතුරු (උදා: ජල මට්ටම, ගමනාගමන තත්ත්වය)...' : 'Optional details (e.g., depth, passage status)...'}
                             value={clarResponse[c._id]?.comment || ''}
                             onChange={e => setClarResponse(prev => ({ ...prev, [c._id]: { ...prev[c._id], comment: e.target.value } }))}
                             className="text-xs p-1.5 border rounded flex-1"
@@ -583,7 +588,7 @@ export default function Citizen() {
                             disabled={respondingId === c._id}
                             onClick={() => respondClarification(c.incidentId, c._id)}
                           >
-                            {respondingId === c._id ? 'Sending…' : 'Send'}
+                            {respondingId === c._id ? (lang === 'si' ? 'යවමින්…' : 'Sending…') : (lang === 'si' ? 'යවන්න' : 'Send')}
                           </button>
                         </div>
                       </div>
@@ -603,15 +608,15 @@ export default function Citizen() {
           <section className="panel bg-white border border-slate-200">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div>
-                <div className="eyebrow">DIFFERENTIATOR FEATURE · PROXIMITY ADVISORIES</div>
-                <h2>Monitored Saved Location & Alert Delivery</h2>
+                <div className="eyebrow">{t.notifEyebrow}</div>
+                <h2>{t.notifHeading}</h2>
               </div>
               <span className="badge bg-emerald-100 text-emerald-800 font-bold text-xs">
-                {savedLoc.optInAlerts ? '● ALERTS ACTIVE' : '○ ALERTS OFF'}
+                {savedLoc.optInAlerts ? (lang === 'si' ? '● සක්‍රීයයි' : '● ALERTS ACTIVE') : (lang === 'si' ? '○ අක්‍රීයයි' : '○ ALERTS OFF')}
               </span>
             </div>
             <p className="muted text-xs mb-4">
-              Citizens opt in to receive updates relevant to their saved location, including simulated river alerts, confirmed hazards, and when an incident is resolved by field crews.
+              {t.notifSubheading}
             </p>
 
             <form onSubmit={handleSaveLocation} className="space-y-4 text-xs">
@@ -625,7 +630,7 @@ export default function Citizen() {
                     className="rounded text-emerald-700 h-4 w-4"
                   />
                   <label htmlFor="opt-in-alerts" className="font-bold text-slate-900 cursor-pointer">
-                    Opt in to Nearby Emergency Warnings for My Saved Location
+                    {t.optInCheckbox}
                   </label>
                 </div>
 
@@ -633,7 +638,7 @@ export default function Citizen() {
                   <div className="space-y-3 pt-2 border-t border-slate-200">
                     <div>
                       <label htmlFor="saved-ward" className="block font-semibold text-slate-700 mb-1">
-                        Primary Monitored Ward / Corridor
+                        {t.primaryWardLabel}
                       </label>
                       <select
                         id="saved-ward"
@@ -669,14 +674,14 @@ export default function Citizen() {
                           className="rounded text-blue-600 h-4 w-4"
                         />
                         <label htmlFor="channel-email-toggle" className="font-semibold text-slate-900 cursor-pointer">
-                          Optional Email Delivery Channel
+                          {t.emailChannelToggle}
                         </label>
                       </div>
 
                       {savedLoc.channelEmail && (
                         <div className="space-y-1.5 pt-1">
                           <label htmlFor="citizen-email" className="block text-[11px] text-slate-600 font-medium">
-                            Recipient Email Address:
+                            {lang === 'si' ? 'විද්‍යුත් තැපැල් ලිපිනය (Email):' : 'Recipient Email Address:'}
                           </label>
                           <input
                             id="citizen-email"
@@ -703,7 +708,7 @@ export default function Citizen() {
                   disabled={savingLoc}
                   className="bg-[#174b3c] hover:bg-[#123b30] text-white text-xs px-4 py-2 rounded-lg font-bold shadow-xs disabled:opacity-50"
                 >
-                  {savingLoc ? 'Saving Settings…' : 'Save Location & Alert Preferences'}
+                  {savingLoc ? (lang === 'si' ? 'සුරකිමින් පවතී…' : 'Saving Settings…') : t.savePreferencesBtn}
                 </button>
                 {locFeedback && (
                   <span className={`text-xs font-semibold ${locFeedback.error ? 'text-rose-600' : 'text-emerald-700'}`}>

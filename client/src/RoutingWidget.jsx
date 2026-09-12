@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { request } from './api.js';
 
-export default function RoutingWidget({ defaultOrigin = 'node-modara', defaultDest = 'node-borella' }) {
+export default function RoutingWidget({ defaultOrigin = 'node-modara', defaultDest = 'node-borella', lang = 'en', t = {} }) {
   const [nodes, setNodes] = useState([]);
   const [closedRoads, setClosedRoads] = useState([]);
   const [origin, setOrigin] = useState(defaultOrigin);
@@ -101,7 +101,7 @@ export default function RoutingWidget({ defaultOrigin = 'node-modara', defaultDe
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label htmlFor="route-origin" className="block text-xs font-semibold text-slate-700 mb-1">
-            Origin Hub
+            {t.originLabel || (lang === 'si' ? 'ආරම්භක ස්ථානය' : 'Origin Hub')}
           </label>
           <select
             id="route-origin"
@@ -116,7 +116,7 @@ export default function RoutingWidget({ defaultOrigin = 'node-modara', defaultDe
         </div>
         <div>
           <label htmlFor="route-destination" className="block text-xs font-semibold text-slate-700 mb-1">
-            Destination Hub
+            {t.destinationLabel || (lang === 'si' ? 'ගමනාන්තය / නවාතැන' : 'Destination Hub')}
           </label>
           <select
             id="route-destination"

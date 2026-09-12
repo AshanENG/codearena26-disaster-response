@@ -47,7 +47,7 @@ Closure & Open  Family Party Allocation         Audit Trail & Spam Restriction
 ```
 
 - **5 Purpose-Built Workspaces**:
-  1. **Citizen Portal**: Verified registration with Sri Lankan NIC validation, photo + GPS intake, duplicate prevention, real-time hydrological flood warnings, dynamic detour routing, and in-app area notifications when nearby incidents are confirmed.
+  1. **Citizen Portal**: Verified registration with Sri Lankan NIC validation, photo + GPS intake, duplicate prevention, real-time hydrological flood warnings, dynamic detour routing, in-app area notifications, and **instant Bilingual localization (English / සිංහල)** for grass-roots community reporting without language barriers.
   2. **Operations Desk**: Case builder, 5-check evaluation (2 deterministic system checks + 3 multimodal AI checks), incident grouping, road closure control, idempotent crew dispatch, and clarification broadcasting.
   3. **Field Crew App**: Assigned work orders, turn-by-turn dispatch notes, and mandatory on-site photo upload before roads can reopen.
   4. **Relief Operations**: Evacuation shelter management with real-time capacity progress, supply tracking, party-size household allocation (409 overcapacity guard), and interactive hydrological simulation stage control (gradual level increase/decrease).
