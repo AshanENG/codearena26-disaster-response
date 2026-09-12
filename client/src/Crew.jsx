@@ -78,6 +78,7 @@ export default function Crew() {
     }
   }
 
+  const [crewTab, setCrewTab] = useState('active');
   const activeJobs = incidents.filter(i => i.status !== 'closed');
   const closedJobs = incidents.filter(i => i.status === 'closed');
 
@@ -86,10 +87,48 @@ export default function Crew() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="eyebrow">FIELD CREW OPERATIONS</div>
-          <h2>Assigned Work Orders</h2>
+          <h2>Field Work Orders</h2>
           <p className="muted text-sm">Real-time task queue · physical photo verification required for closure</p>
         </div>
         <button className="secondary" onClick={loadAssigned} disabled={loading}>Refresh Tasks</button>
+      </div>
+
+      {/* Category Tabs */}
+      <div className="flex flex-wrap gap-2 mt-5 border-b border-slate-200 pb-3" role="tablist" aria-label="Crew categories">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={crewTab === 'active'}
+          onClick={() => setCrewTab('active')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            crewTab === 'active'
+              ? 'bg-[#174b3c] text-white shadow-sm'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <span>🚨</span>
+          <span>Active Dispatches</span>
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${crewTab === 'active' ? 'bg-amber-400 text-slate-950' : 'bg-slate-200 text-slate-700'}`}>
+            {activeJobs.length}
+          </span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={crewTab === 'closed'}
+          onClick={() => setCrewTab('closed')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            crewTab === 'closed'
+              ? 'bg-[#174b3c] text-white shadow-sm'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <span>✅</span>
+          <span>Resolved & Reopened History</span>
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${crewTab === 'closed' ? 'bg-emerald-400 text-slate-950' : 'bg-slate-200 text-slate-700'}`}>
+            {closedJobs.length}
+          </span>
+        </button>
       </div>
 
       {actionMessage && (
@@ -108,7 +147,8 @@ export default function Crew() {
         <p role="status" className="py-8">Loading assigned field tasks…</p>
       ) : (
         <div className="space-y-6 mt-6">
-          <div>
+          {crewTab === 'active' && (
+            <div>
             <h3 className="text-base font-bold text-slate-800 mb-3">
               Active Dispatches ({activeJobs.length})
             </h3>
@@ -213,26 +253,34 @@ export default function Crew() {
               </div>
             )}
           </div>
+          )}
 
-          {closedJobs.length > 0 && (
-            <div className="pt-6 border-t border-slate-200">
+          {crewTab === 'closed' && (
+            <div>
               <h3 className="text-base font-bold text-slate-800 mb-3">Recently Closed Jobs ({closedJobs.length})</h3>
-              <div className="space-y-3">
-                {closedJobs.map(job => (
-                  <div key={job._id} className="p-3 border border-slate-100 rounded bg-slate-50 flex items-center justify-between text-xs">
-                    <div>
-                      <span className="badge bg-emerald-100 text-emerald-800 font-semibold mr-2">RESOLVED</span>
-                      <strong className="text-slate-800">{job.title}</strong> · {job.ward?.name}
-                      <p className="text-slate-500 mt-1">{job.closure?.notes}</p>
+              {!closedJobs.length ? (
+                <div className="empty text-center py-8">
+                  <h4 className="text-sm font-semibold text-slate-700">No closed jobs yet</h4>
+                  <p className="muted text-xs">Completed tasks with mandatory closure photos will appear in this audit list.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {closedJobs.map(job => (
+                    <div key={job._id} className="p-3 border border-slate-200 rounded-lg bg-white shadow-2xs flex items-center justify-between text-xs">
+                      <div>
+                        <span className="badge bg-emerald-100 text-emerald-800 font-semibold mr-2">RESOLVED</span>
+                        <strong className="text-slate-800">{job.title}</strong> · {job.ward?.name}
+                        <p className="text-slate-500 mt-1">{job.closure?.notes}</p>
+                      </div>
+                      {job.closure?.photo?.url && (
+                        <a href={job.closure.photo.url} target="_blank" rel="noreferrer" className="text-blue-600 underline font-semibold">
+                          View Verification Photo →
+                        </a>
+                      )}
                     </div>
-                    {job.closure?.photo?.url && (
-                      <a href={job.closure.photo.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">
-                        View Photo
-                      </a>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { request } from './api.js';
 import DispatchModal from './DispatchModal.jsx';
 
@@ -15,6 +15,14 @@ export default function CaseModal({ report, onClose, onUpdated }) {
   const checks = assessment?.checks;
   const aggregator = assessment?.aggregator;
   const snapshot = assessment?.caseSnapshot;
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape' && !showDispatch) onClose();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, showDispatch]);
 
   async function handleEvaluate() {
     setEvaluating(true);
@@ -44,9 +52,13 @@ export default function CaseModal({ report, onClose, onUpdated }) {
             hazardType: 'flood',
             severity: 'moderate',
             reportIds: [currentReport._id],
+            initialReportStatus: 'under_review',
           }),
         });
         incId = createInc.incident._id;
+        const updatedReport = { ...currentReport, incidentId: incId, status: 'under_review' };
+        setCurrentReport(updatedReport);
+        if (onUpdated) onUpdated(updatedReport);
       }
       await request(`/api/incidents/${incId}/clarification`, {
         method: 'POST',
@@ -54,19 +66,25 @@ export default function CaseModal({ report, onClose, onUpdated }) {
       });
       setClarSuccess('Clarification question broadcasted to nearby citizens.');
       setShowClarInput(false);
+      setClarQuestion('');
     } catch (err) {
       setEvalError(err.message || 'Failed to request clarification.');
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 overflow-y-auto" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="case-modal-title"
+    >
       <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div>
             <span className="badge text-xs font-semibold">STAGE 02–04 · CASE & CHECKS INSPECTION</span>
-            <h2 className="text-xl font-bold mt-1 text-slate-900">
+            <h2 id="case-modal-title" className="text-xl font-bold mt-1 text-slate-900">
               Report Assessment: {currentReport.kind === 'help' ? `Help Request (${currentReport.helpCategory})` : 'Hazard Report'}
             </h2>
             <p className="text-xs text-slate-500">ID: {currentReport._id} · Submitted {new Date(currentReport.createdAt).toLocaleString()}</p>

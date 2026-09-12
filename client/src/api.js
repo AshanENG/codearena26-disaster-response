@@ -1,7 +1,12 @@
 export async function request(path, options = {}) {
+  const headers = { 'X-Requested-With': 'CodeArena', ...options.headers };
+  if (typeof options.body === 'string' && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const response = await fetch(path, {
     credentials: 'same-origin', ...options,
-    headers: { 'X-Requested-With': 'CodeArena', ...options.headers },
+    headers,
     signal: options.signal || AbortSignal.timeout(20000),
   });
   const text = await response.text();

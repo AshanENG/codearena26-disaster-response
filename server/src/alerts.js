@@ -12,11 +12,21 @@ export function alertsRouter({ requireAuth, requireRole } = {}) {
 
   // Public/Citizen route: List active alerts
   router.get('/alerts', async (req, res) => {
+    const feed = getCurrentFeedState();
+    const disclaimer = 'SIMULATED HYDROLOGICAL ALERT - For demonstration only. Not monitored for emergency response.';
+
+    // If current feed simulation stage has no alerts (Stage 0 - baseline), return empty list and sync DB
+    if (!feed.alerts || feed.alerts.length === 0) {
+      Alert.updateMany({ active: true }, { $set: { active: false } }).catch(() => {});
+      return res.json({
+        alerts: [],
+        isSimulated: true,
+        disclaimer,
+      });
+    }
+
     try {
       const activeAlerts = await Alert.find({ active: true }).sort({ issuedAt: -1 }).lean();
-      
-      // If DB has no active alerts, also check feed state
-      const feed = getCurrentFeedState();
       res.json({
         alerts: activeAlerts.length > 0 ? activeAlerts : feed.alerts.map((a, i) => ({
           _id: `feed-alert-${i}`,
@@ -25,11 +35,10 @@ export function alertsRouter({ requireAuth, requireRole } = {}) {
           issuedAt: feed.timestamp,
         })),
         isSimulated: true,
-        disclaimer: 'SIMULATED HYDROLOGICAL ALERT - For demonstration only. Not monitored for emergency response.',
+        disclaimer,
       });
     } catch (err) {
       // Fallback if DB is disconnected
-      const feed = getCurrentFeedState();
       res.json({
         alerts: feed.alerts.map((a, i) => ({
           _id: `feed-alert-${i}`,
@@ -38,7 +47,7 @@ export function alertsRouter({ requireAuth, requireRole } = {}) {
           issuedAt: feed.timestamp,
         })),
         isSimulated: true,
-        disclaimer: 'SIMULATED HYDROLOGICAL ALERT - For demonstration only. Not monitored for emergency response.',
+        disclaimer,
       });
     }
   });

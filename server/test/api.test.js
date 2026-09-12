@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { createApp } from '../src/app.js';
 import { Report } from '../src/models/Report.js';
 import { reportInput, listInput } from '../src/validation.js';
-import { credentials, hashPassword, verifyPassword, digest, allow } from '../src/auth.js';
+import { credentials, registrationSchema, hashPassword, verifyPassword, digest, allow } from '../src/auth.js';
 import { reportScope, reportDto } from '../src/reports.js';
 import { inspectImage } from '../src/evidence.js';
 import { assessmentSchema } from '../src/ai/gemini.js';
@@ -70,6 +70,46 @@ test('public registration schema rejects role escalation and weak credentials', 
   assert.ok(credentials.safeParse(input).success);
   assert.ok(!credentials.safeParse({ ...input, role: 'admin' }).success);
   assert.ok(!credentials.safeParse({ ...input, password: 'short' }).success);
+
+  // Full registration schema validation
+  assert.ok(registrationSchema.safeParse({
+    username: 'citizen-ashan',
+    password: 'securePassword123',
+    confirmPassword: 'securePassword123',
+    fullName: 'Ashan Perera',
+    nic: '123456789V',
+    email: 'ashan@example.com',
+  }).success);
+
+  // Validates 12-digit new NIC
+  assert.ok(registrationSchema.safeParse({
+    username: 'citizen-new-nic',
+    password: 'securePassword123',
+    confirmPassword: 'securePassword123',
+    nic: '199512345678',
+  }).success);
+
+  // Rejects invalid NIC formats
+  assert.ok(!registrationSchema.safeParse({
+    username: 'citizen-bad-nic',
+    password: 'securePassword123',
+    confirmPassword: 'securePassword123',
+    nic: '12345', // too short
+  }).success);
+
+  assert.ok(!registrationSchema.safeParse({
+    username: 'citizen-bad-nic-2',
+    password: 'securePassword123',
+    confirmPassword: 'securePassword123',
+    nic: '1234567890123', // 13 digits
+  }).success);
+
+  // Rejects password confirmation mismatch
+  assert.ok(!registrationSchema.safeParse({
+    username: 'citizen-mismatch',
+    password: 'securePassword123',
+    confirmPassword: 'differentPassword456',
+  }).success);
 });
 test('password hashing uses salt, verifies only the matching password, session digest is irreversible', async () => {
   const a = await hashPassword('test-long-password'); const b = await hashPassword('test-long-password');

@@ -16,14 +16,14 @@ Implemented and verified in the actual local clone, fulfilling all technical and
 - **README & Architecture Overhaul**: Complete documentation of the full disaster response system, 5 role workspaces, pipeline diagram, test commands, and demonstration credentials.
 
 ### Milestone 7 checks actually run
-- `npm test`: **32/32 PASSED** (all unit, schema, security, algorithmic, and role tests).
+- `npm test`: **36/36 PASSED** (all unit, schema, security, algorithmic, proximity, privacy, NIC validation, email OTP verification, and role tests).
 - `npm run test:e2e`: **PASSED** against real MongoDB and live HTTP endpoints across all 8 stages.
-- `npm run demo:reset`: **PASSED** (exit code 0; database left in pristine presentation-ready state).
+- `npm run demo:reset`: **PASSED** (exit code 0; database left in pristine presentation-ready state with saved citizen monitored location).
 - `npm run test:m6`: **PASSED** against real MongoDB (`check-m6-admin.js`).
 - `npm run test:m5`: **PASSED** against real MongoDB (`check-m5-routing.js`).
 - `npm run test:m4`: **PASSED** against real MongoDB and GridFS (`check-m4-flow.js`).
 - `npm run test:persistence`: **PASSED** against real MongoDB and GridFS (`check-persistence.js`).
-- `npm run build`: **PASSED** (43 modules transformed, zero build errors or warnings).
+- `npm run build`: **PASSED** (45 modules transformed, zero build errors or warnings).
 
 ### Remaining / next
 M8: Pitch deck creation (`docs/pitch_deck.md`), demonstration script, and timed English presentation rehearsal (protecting the final 4 rehearsal hours before the 2026-09-13 06:00 Asia/Colombo deadline).

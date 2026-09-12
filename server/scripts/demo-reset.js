@@ -46,6 +46,19 @@ async function resetDemo() {
       existing.isRestricted = false;
       await existing.save();
     }
+    if (role === 'citizen' && !existing.savedLocation?.wardId) {
+      existing.savedLocation = {
+        optInAlerts: true,
+        wardId: 'ward-grandpass',
+        wardName: 'Grandpass / Nagalagam Street',
+        latitude: 6.9535,
+        longitude: 79.8732,
+        email: 'citizen.kelani@resilient-lanka.gov.lk',
+        channelEmail: true,
+        updatedAt: new Date(),
+      };
+      await existing.save();
+    }
     accounts.push({ username, role, password: DEMO_PASSWORD });
     userMap[role] = existing;
   }

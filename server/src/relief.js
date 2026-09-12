@@ -51,6 +51,10 @@ export function reliefRouter({ requireAuth, requireRole } = {}) {
         return res.status(400).json({ error: 'Only help requests can be assigned to relief shelters.' });
       }
 
+      if (report.reliefAssignment?.status === 'assigned') {
+        return res.status(409).json({ error: `This help request is already allocated to ${report.reliefAssignment.shelterName}.` });
+      }
+
       // Verify shelter
       const shelter = await Shelter.findById(shelterId);
       if (!shelter) {

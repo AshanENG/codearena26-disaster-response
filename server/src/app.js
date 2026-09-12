@@ -10,6 +10,7 @@ import { alertsRouter } from './alerts.js';
 import { routingRouter } from './routing.js';
 import { reliefRouter } from './relief.js';
 import { adminRouter } from './admin.js';
+import { notificationsRouter } from './notifications.js';
 import { evidenceStore } from './evidence.js';
 import { allow } from './auth.js';
 
@@ -35,6 +36,7 @@ export function createApp({ reports = Report, incidents = Incident, connection =
   app.use('/api/reports', requireDatabase, identify, requireUser, reportsRouter({ reports, storage: evidenceStore(connection) }));
   app.use('/api/incidents', requireDatabase, identify, requireUser, incidentsRouter({ incidents, reports, storage: evidenceStore(connection) }));
   app.use('/api', identify, alertsRouter({ requireAuth: requireUser, requireRole: roles => allow(...roles) }));
+  app.use('/api', identify, notificationsRouter({ requireAuth: requireUser, requireDatabase }));
   app.use('/api/routing', routingRouter());
   app.use('/api/relief', requireDatabase, identify, reliefRouter({ requireAuth: requireUser, requireRole: roles => allow(...roles) }));
   app.use('/api/admin', requireDatabase, identify, adminRouter({ requireAuth: requireUser, requireRole: roles => allow(...roles) }));

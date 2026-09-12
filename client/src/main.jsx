@@ -8,6 +8,7 @@ import ReportQueue from './ReportQueue.jsx';
 import Crew from './Crew.jsx';
 import Relief from './Relief.jsx';
 import Admin from './Admin.jsx';
+import ProfileModal from './ProfileModal.jsx';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -64,20 +65,30 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-const views = ['Citizen', 'Operations', 'Crew', 'Relief', 'Admin'];
+const allViews = ['Citizen', 'Operations', 'Crew', 'Relief', 'Admin'];
+const roleViews = {
+  citizen: ['Citizen'],
+  officer: ['Operations', 'Crew', 'Relief', 'Citizen'],
+  crew: ['Crew', 'Operations'],
+  relief: ['Relief', 'Operations'],
+  admin: ['Operations', 'Crew', 'Relief', 'Admin', 'Citizen'],
+};
 
 function App() {
-  const [view, setView] = useState(() => views.find(v => `#${v.toLowerCase()}` === location.hash) || 'Citizen');
+  const [view, setView] = useState(() => allViews.find(v => `#${v.toLowerCase()}` === location.hash) || 'Citizen');
   const [health, setHealth] = useState(null);
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
   const [authError, setAuthError] = useState('');
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
-    const change = () => setView(views.find(v => `#${v.toLowerCase()}` === location.hash) || 'Citizen');
+    const change = () => setView(allViews.find(v => `#${v.toLowerCase()}` === location.hash) || 'Citizen');
     window.addEventListener('hashchange', change);
     return () => window.removeEventListener('hashchange', change);
   }, []);
+
+  const availableViews = user ? (roleViews[user.role] || ['Citizen']) : ['Citizen'];
 
   // Check health periodically with shorter initial interval for fast recovery
   useEffect(() => {
@@ -174,8 +185,18 @@ function App() {
           <div className="flex flex-wrap items-center gap-3">
             {user && (
               <>
-                <span className="text-xs font-medium text-slate-600">{user.username} · {user.role}{user.demo ? ' · demo account' : ''}</span>
-                <button className="secondary" onClick={signOut}>Sign out</button>
+                <span className="text-xs font-medium text-slate-600">
+                  {user.fullName ? `${user.fullName} (@${user.username})` : user.username} · {user.role}{user.demo ? ' · demo' : ''}
+                </span>
+                <button
+                  type="button"
+                  className="secondary text-xs flex items-center gap-1.5 py-1 px-3"
+                  onClick={() => setShowProfile(true)}
+                  title="View profile, edit personal details, and change password"
+                >
+                  <span>👤</span> Profile
+                </button>
+                <button className="secondary text-xs py-1 px-3" onClick={signOut}>Sign out</button>
               </>
             )}
           </div>
@@ -183,9 +204,9 @@ function App() {
       </header>
       <div className="mx-auto max-w-7xl md:grid md:grid-cols-[205px_1fr]">
         <nav aria-label="Main navigation" className="p-5 md:pt-9 flex gap-2 overflow-x-auto md:flex-col">
-          {views.map((name, index) => (
+          {availableViews.map(name => (
             <a key={name} href={`#${name.toLowerCase()}`} aria-current={view === name ? 'page' : undefined} className={`nav-link ${view === name ? 'active' : ''}`}>
-              <span className="opacity-50 text-xs">0{index + 1}</span> {name}
+              <span className="font-semibold text-sm">{name}</span>
             </a>
           ))}
         </nav>
@@ -193,15 +214,25 @@ function App() {
           <div className="eyebrow">REPORT · REVIEW · RESPOND</div>
           <h1>{view === 'Citizen' ? 'Every report matters.' : view === 'Operations' ? 'Understand what’s reported.' : `${view} workspace`}</h1>
           <p className="muted mb-7">A foundation for coordinated disaster response across Sri Lanka.</p>
-          <div className="system mb-6" role="status">
-            <span className={`dot ${health?.ready ? 'online' : ''}`} />
-            {!health ? 'Checking services…' : health.server === 'unavailable' ? 'Server unavailable' : `Server ready · Database ${health.database?.status || 'unknown'}`}
-          </div>
+          {health && !health.ready && (
+            <div className="system mb-6 text-rose-800 bg-rose-50 border-rose-300" role="status">
+              <span className="dot" />
+              {health.server === 'unavailable' ? 'Services temporarily unavailable' : `Connecting: Database ${health.database?.status || 'connecting'}`}
+            </div>
+          )}
           {authError && <p role="alert" className="notice error mb-5">{authError}</p>}
           {content()}
           <footer className="mt-8 text-xs text-slate-500">Reports are not monitored for emergency dispatch. Verified warnings, closure-aware safe routes, and emergency shelter allocations are active for simulated demo corridors. Never guarantees real-world safety.</footer>
         </main>
       </div>
+
+      {showProfile && user && (
+        <ProfileModal
+          user={user}
+          onClose={() => setShowProfile(false)}
+          onUserUpdated={updated => setUser({ ...user, ...updated })}
+        />
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 // Proactively raises simulated flood warnings independently of citizen reports (R02, R11).
 
 import { Alert } from '../models/Alert.js';
+import { notifyCitizensOnWeatherAlert } from './notificationService.js';
 
 export const SIMULATION_STAGES = [
   {
@@ -134,6 +135,7 @@ export async function syncAlertsToDatabase() {
 
   const createdAlerts = [];
   for (const alertDef of current.alerts) {
+    let alertObj = alertDef;
     try {
       const alert = await Alert.create({
         ...alertDef,
@@ -141,9 +143,11 @@ export async function syncAlertsToDatabase() {
         issuedAt: new Date(),
       });
       createdAlerts.push(alert);
+      alertObj = alert;
     } catch {
       // If DB is offline or mock, continue gracefully
     }
+    notifyCitizensOnWeatherAlert(alertObj).catch(() => {});
   }
   return createdAlerts;
 }

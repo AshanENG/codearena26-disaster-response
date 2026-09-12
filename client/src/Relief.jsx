@@ -36,13 +36,31 @@ export default function Relief() {
     return () => clearInterval(interval);
   }, []);
 
-  async function stepFeed() {
+  async function changeFeedStage(targetStage) {
     try {
-      await request('/api/feed/step', { method: 'POST' });
+      await request('/api/feed/step', {
+        method: 'POST',
+        body: JSON.stringify({ stage: targetStage }),
+      });
       await loadData();
-      setActionMessage({ success: true, text: 'Advanced hydrological feed simulation stage.' });
+      setActionMessage({
+        success: true,
+        text: `Hydrological simulation set to Stage ${targetStage}. Gauges and warning triggers updated.`,
+      });
     } catch (err) {
       setActionMessage({ error: true, text: err.message });
+    }
+  }
+
+  function stepIncrease() {
+    if (feedStatus && feedStatus.stage < 3) {
+      changeFeedStage(feedStatus.stage + 1);
+    }
+  }
+
+  function stepDecrease() {
+    if (feedStatus && feedStatus.stage > 0) {
+      changeFeedStage(feedStatus.stage - 1);
     }
   }
 
@@ -89,6 +107,9 @@ export default function Relief() {
   const totalAvailable = Math.max(0, totalCapacity - totalOccupancy);
   const overallOccupancyPct = totalCapacity > 0 ? Math.round((totalOccupancy / totalCapacity) * 100) : 0;
 
+  const [reliefTab, setReliefTab] = useState('shelters'); // 'shelters' | 'requests' | 'river'
+  const unassignedCount = helpReports.filter(r => r.reliefAssignment?.status !== 'assigned').length;
+
   if (loading) {
     return <div className="p-8 text-center text-slate-500">Loading Relief Coordination Desk…</div>;
   }
@@ -108,29 +129,13 @@ export default function Relief() {
             </p>
           </div>
 
-          {/* Hydrological Replay Feed Controls */}
+          {/* Quick River Feed Status Badge */}
           {feedStatus && (
-            <div className="bg-slate-800 border border-slate-700 p-3 rounded-lg flex items-center gap-3 text-xs">
-              <div>
-                <span className="text-slate-400 block text-[11px]">River Feed Stage</span>
-                <strong className="text-amber-300 font-mono">
-                  Stage {feedStatus.stage}: {feedStatus.stageName}
-                </strong>
-              </div>
-              <div className="flex gap-1.5">
-                <button
-                  onClick={stepFeed}
-                  className="px-2.5 py-1 text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded"
-                >
-                  Advance Feed
-                </button>
-                <button
-                  onClick={resetFeed}
-                  className="px-2 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded"
-                >
-                  Reset
-                </button>
-              </div>
+            <div className="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs">
+              <span className="text-slate-400">River Stage:</span>
+              <strong className="text-amber-300 font-mono">
+                Stage {feedStatus.stage}: {feedStatus.stageName}
+              </strong>
             </div>
           )}
         </div>
@@ -156,6 +161,60 @@ export default function Relief() {
         </div>
       </div>
 
+      {/* Category Navigation Tabs */}
+      <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-2xs">
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Relief categories">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={reliefTab === 'shelters'}
+            onClick={() => setReliefTab('shelters')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+              reliefTab === 'shelters'
+                ? 'bg-[#174b3c] text-white shadow-sm'
+                : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <span>🏥</span>
+            <span>Evacuation Shelters & Resources</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${reliefTab === 'shelters' ? 'bg-emerald-400 text-slate-950' : 'bg-slate-200 text-slate-700'}`}>
+              {shelters.length}
+            </span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={reliefTab === 'requests'}
+            onClick={() => setReliefTab('requests')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+              reliefTab === 'requests'
+                ? 'bg-[#174b3c] text-white shadow-sm'
+                : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <span>🆘</span>
+            <span>Citizen Help Queue</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${unassignedCount > 0 ? 'bg-amber-400 text-slate-950' : 'bg-slate-200 text-slate-700'}`}>
+              {unassignedCount} pending
+            </span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={reliefTab === 'river'}
+            onClick={() => setReliefTab('river')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+              reliefTab === 'river'
+                ? 'bg-[#174b3c] text-white shadow-sm'
+                : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            <span>🌊</span>
+            <span>River Hydrological Simulation</span>
+          </button>
+        </div>
+      </div>
+
       {actionMessage && (
         <div
           className={`p-3 rounded-lg text-xs font-semibold ${
@@ -168,9 +227,19 @@ export default function Relief() {
         </div>
       )}
 
-      {/* Shelters Grid */}
+      {/* Tab 1: Shelters Grid */}
+      {reliefTab === 'shelters' && (
       <section className="space-y-3">
-        <h3 className="font-bold text-base text-slate-800">Designated Evacuation Shelters</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-base text-slate-800">Designated Evacuation Shelters</h3>
+          <button
+            type="button"
+            onClick={() => setReliefTab('requests')}
+            className="text-xs text-sky-800 font-semibold underline hover:no-underline"
+          >
+            Match Help Requests ({unassignedCount} waiting) →
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {shelters.map(shelter => {
             const pct = shelter.occupancyPercentage;
@@ -234,14 +303,21 @@ export default function Relief() {
           })}
         </div>
       </section>
+      )}
 
-      {/* Citizen Help Requests Intake Queue */}
-      <section className="space-y-3 pt-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-base text-slate-800">
-            Citizen Help Requests Intake Queue ({helpReports.length})
-          </h3>
-          <span className="text-xs text-slate-500">Filtered for role: Relief Coordinator</span>
+      {/* Tab 2: Citizen Help Requests Intake Queue */}
+      {reliefTab === 'requests' && (
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="font-bold text-base text-slate-800">
+              Citizen Help Requests Intake Queue ({helpReports.length})
+            </h3>
+            <p className="text-xs text-slate-500">Unallocated requests requiring shelter evacuation assignment</p>
+          </div>
+          <span className="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+            Role: Relief Coordinator
+          </span>
         </div>
 
         {helpReports.length === 0 ? (
@@ -301,6 +377,141 @@ export default function Relief() {
           </div>
         )}
       </section>
+      )}
+
+      {/* Tab 3: Hydrological River Monitor & Feed Controls */}
+      {reliefTab === 'river' && (
+        <section className="panel space-y-5">
+          <div>
+            <div className="eyebrow">R02 · HYDROLOGICAL SENSOR SIMULATION</div>
+            <h2>Kelani River Basin Stream Feed</h2>
+            <p className="muted text-sm">
+              Simulated hydrological stream gauge network triggering upstream surge advisories, minor flood spillage, and major flood inundation alerts.
+            </p>
+          </div>
+
+          {feedStatus && (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <span className="text-xs text-slate-500 uppercase tracking-wider font-bold">Active Replay State</span>
+                  <div className="text-xl font-extrabold text-slate-900 mt-0.5">
+                    Stage {feedStatus.stage}: {feedStatus.stageName}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={stepDecrease}
+                    disabled={feedStatus.stage === 0}
+                    className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-800 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
+                    title="Recede flood waters gradually to previous stage"
+                  >
+                    ← Recede River Level
+                  </button>
+                  <button
+                    type="button"
+                    onClick={stepIncrease}
+                    disabled={feedStatus.stage >= 3}
+                    className="px-3.5 py-2 text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
+                    title="Advance flood waters gradually to next stage"
+                  >
+                    Surge River Level →
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetFeed}
+                    className="secondary text-xs"
+                    title="Instantly reset to dry normal conditions"
+                  >
+                    Reset (Stage 0)
+                  </button>
+                </div>
+              </div>
+
+              {/* Interactive Stage Selector Cards */}
+              <div className="space-y-1.5 pt-2 border-t border-slate-200">
+                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Direct Stage Selection · Click any stage card to transition river conditions:
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => changeFeedStage(0)}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      feedStatus.stage === 0
+                        ? 'bg-emerald-50 border-emerald-500 ring-2 ring-emerald-300 shadow-xs'
+                        : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <strong className="block text-slate-900 font-bold">Stage 0 · Normal</strong>
+                      {feedStatus.stage === 0 && (
+                        <span className="text-[10px] font-extrabold bg-emerald-600 text-white px-1.5 py-0.5 rounded-full">ACTIVE</span>
+                      )}
+                    </div>
+                    <span className="text-slate-600 block mt-1">Gauge 3.5 ft · Dry baseline</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => changeFeedStage(1)}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      feedStatus.stage === 1
+                        ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-300 shadow-xs'
+                        : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <strong className="block text-slate-900 font-bold">Stage 1 · Advisory</strong>
+                      {feedStatus.stage === 1 && (
+                        <span className="text-[10px] font-extrabold bg-amber-600 text-white px-1.5 py-0.5 rounded-full">ACTIVE</span>
+                      )}
+                    </div>
+                    <span className="text-slate-600 block mt-1">Gauge 5.2 ft · Alert breached</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => changeFeedStage(2)}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      feedStatus.stage === 2
+                        ? 'bg-orange-50 border-orange-500 ring-2 ring-orange-300 shadow-xs'
+                        : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <strong className="block text-slate-900 font-bold">Stage 2 · Minor Flood</strong>
+                      {feedStatus.stage === 2 && (
+                        <span className="text-[10px] font-extrabold bg-orange-600 text-white px-1.5 py-0.5 rounded-full">ACTIVE</span>
+                      )}
+                    </div>
+                    <span className="text-slate-600 block mt-1">Gauge 7.2 ft · Lowland spill</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => changeFeedStage(3)}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      feedStatus.stage === 3
+                        ? 'bg-rose-50 border-rose-500 ring-2 ring-rose-300 shadow-xs'
+                        : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <strong className="block text-slate-900 font-bold">Stage 3 · Major Flood</strong>
+                      {feedStatus.stage === 3 && (
+                        <span className="text-[10px] font-extrabold bg-rose-600 text-white px-1.5 py-0.5 rounded-full">ACTIVE</span>
+                      )}
+                    </div>
+                    <span className="text-slate-600 block mt-1">Gauge 8.6 ft · Inundation</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Assignment Modal */}
       {assigningReport && (

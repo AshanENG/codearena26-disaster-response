@@ -8,9 +8,14 @@ import { User } from './models/User.js';
 import { allow } from './auth.js';
 import { evidenceStore, inspectImage, MAX_PHOTO_BYTES } from './evidence.js';
 import { findNearestWard, findNearestRoad } from './data/demoRegion.js';
+import {
+  notifyNearbyCitizensOnIncidentCreated,
+  notifyNearbyCitizensOnIncidentResolved,
+} from './services/notificationService.js';
 
-export function incidentDto(document) {
+export function incidentDto(document, user = null) {
   const i = document.toObject ? document.toObject() : document;
+  const isStaff = !user || ['officer', 'admin', 'crew'].includes(user.role);
   return {
     _id: String(i._id),
     title: i.title,
@@ -22,13 +27,13 @@ export function incidentDto(document) {
     ward: i.ward,
     road: i.road,
     reportCount: i.reportIds?.length || 0,
-    reportIds: i.reportIds?.map(String) || [],
+    reportIds: isStaff ? (i.reportIds?.map(String) || []) : [],
     dispatch: i.dispatch?.crewId ? {
       crewId: String(i.dispatch.crewId),
       crewName: i.dispatch.crewName,
       dispatchedBy: String(i.dispatch.dispatchedBy),
       dispatchedAt: i.dispatch.dispatchedAt,
-      instructions: i.dispatch.instructions,
+      instructions: isStaff ? i.dispatch.instructions : undefined,
     } : null,
     closure: i.closure?.closedAt ? {
       closedBy: String(i.closure.closedBy),
@@ -46,15 +51,18 @@ export function incidentDto(document) {
       requestedAt: c.requestedAt,
       status: c.status,
       responseCount: c.responses?.length || 0,
-      responses: (c.responses || []).map(r => ({
+      responses: isStaff ? (c.responses || []).map(r => ({
         citizenId: String(r.citizenId),
         citizenName: r.citizenName,
         responseChoice: r.responseChoice,
         comment: r.comment,
         at: r.at,
+      })) : (c.responses || []).map(r => ({
+        responseChoice: r.responseChoice,
+        at: r.at,
       })),
     })),
-    history: i.history || [],
+    history: isStaff ? (i.history || []) : [],
     createdAt: i.createdAt,
     updatedAt: i.updatedAt,
   };
@@ -66,6 +74,7 @@ const createIncidentSchema = z.object({
   severity: z.enum(['minor', 'moderate', 'severe', 'critical']).default('moderate'),
   isRoadClosed: z.boolean().default(false),
   reportIds: z.array(z.string()).min(1),
+  initialReportStatus: z.enum(['under_review', 'confirmed']).optional(),
 }).strict();
 
 const dispatchSchema = z.object({
@@ -110,7 +119,13 @@ export function incidentsRouter({ incidents = Incident, reports = Report, storag
     }
 
     const items = await incidents.find(filter).sort({ updatedAt: -1, createdAt: -1 }).lean();
-    res.json({ incidents: items.map(incidentDto) });
+    res.json({ incidents: items.map(item => incidentDto(item, req.user)) });
+  });
+
+  // Get available crew units (Officer / Admin) - declared before /:id to avoid route shadowing
+  router.get('/crews', allow('officer', 'admin'), async (_req, res) => {
+    const crews = await User.find({ role: 'crew' }).select('_id username').lean();
+    res.json({ crews: crews.map(c => ({ _id: String(c._id), username: c.username })) });
   });
 
   // 2. Get single incident
@@ -119,10 +134,15 @@ export function incidentsRouter({ incidents = Incident, reports = Report, storag
     const item = await incidents.findById(req.params.id).lean();
     if (!item) return res.status(404).json({ error: 'Incident not found.' });
 
-    // Populate linked reports summary
-    const linkedReports = await reports.find({ _id: { $in: item.reportIds } }).select('_id kind description latitude longitude status photo.fileId createdAt').lean();
+    const isStaff = req.user && ['officer', 'admin', 'crew'].includes(req.user.role);
+    const reportQuery = isStaff
+      ? { _id: { $in: item.reportIds } }
+      : { _id: { $in: item.reportIds }, ownerId: req.user?._id };
+
+    // Populate linked reports summary respecting privacy boundaries
+    const linkedReports = await reports.find(reportQuery).select('_id kind description latitude longitude status photo.fileId createdAt').lean();
     res.json({
-      incident: incidentDto(item),
+      incident: incidentDto(item, req.user),
       linkedReports: linkedReports.map(r => ({
         _id: String(r._id),
         kind: r.kind,
@@ -132,6 +152,7 @@ export function incidentsRouter({ incidents = Incident, reports = Report, storag
         hasPhoto: Boolean(r.photo?.fileId),
         createdAt: r.createdAt,
       })),
+      totalLinkedReportsCount: item.reportIds.length,
     });
   });
 
@@ -140,7 +161,7 @@ export function incidentsRouter({ incidents = Incident, reports = Report, storag
     const parsed = createIncidentSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: 'Invalid incident creation data.', details: parsed.error.issues });
 
-    const { title, hazardType, severity, isRoadClosed, reportIds } = parsed.data;
+    const { title, hazardType, severity, isRoadClosed, reportIds, initialReportStatus } = parsed.data;
     const validReportIds = reportIds.filter(id => mongoose.isObjectIdOrHexString(id));
     if (!validReportIds.length) return res.status(400).json({ error: 'Provide at least one valid report ID.' });
 
@@ -178,22 +199,20 @@ export function incidentsRouter({ incidents = Incident, reports = Report, storag
       }],
     });
 
-    // Update all linked reports
+    // Update all linked reports without premature confirmation if under review
+    const targetReportStatus = initialReportStatus || (isRoadClosed ? 'confirmed' : 'under_review');
     await reports.updateMany(
       { _id: { $in: matchedReports.map(r => r._id) } },
       {
-        $set: { incidentId: incident._id, status: 'confirmed' },
+        $set: { incidentId: incident._id, status: targetReportStatus },
         $push: { history: { action: 'grouped_into_incident', actorId: req.user._id, at: new Date() } },
       }
     );
 
-    res.status(201).json({ incident: incidentDto(incident) });
-  });
+    // Notify nearby citizens who opted into alerts for this area
+    notifyNearbyCitizensOnIncidentCreated(incident).catch(() => {});
 
-  // Get available crew units (Officer / Admin)
-  router.get('/crews', allow('officer', 'admin'), async (_req, res) => {
-    const crews = await User.find({ role: 'crew' }).select('_id username').lean();
-    res.json({ crews: crews.map(c => ({ _id: String(c._id), username: c.username })) });
+    res.status(201).json({ incident: incidentDto(incident, req.user) });
   });
 
   // 4. Dispatch field crew (Officer / Admin) - IDEMPOTENT GUARD
@@ -296,6 +315,17 @@ export function incidentsRouter({ incidents = Incident, reports = Report, storag
     const clar = incident.clarifications.id(req.params.cid);
     if (!clar) return res.status(404).json({ error: 'Clarification request not found.' });
 
+    if (clar.status !== 'active') {
+      return res.status(409).json({ error: 'This clarification inquiry is no longer active.' });
+    }
+
+    const alreadyResponded = (clar.responses || []).some(
+      r => String(r.citizenId) === String(req.user._id)
+    );
+    if (alreadyResponded) {
+      return res.status(409).json({ error: 'You have already submitted a response for this inquiry.' });
+    }
+
     clar.responses.push({
       citizenId: req.user._id,
       citizenName: req.user.username,
@@ -359,6 +389,9 @@ export function incidentsRouter({ incidents = Incident, reports = Report, storag
         $push: { history: { action: 'resolved_by_crew', actorId: req.user._id, at: new Date() } },
       }
     );
+
+    // Notify nearby citizens that hazard is cleared and road corridor is re-opened
+    notifyNearbyCitizensOnIncidentResolved(incident).catch(() => {});
 
     res.json({ incident: incidentDto(incident) });
   });
