@@ -244,7 +244,7 @@ export default function AuthPanel({ onUser }) {
               name="fullName"
               type="text"
               autoComplete="name"
-              placeholder="e.g. Ashan Perera"
+              placeholder="e.g. Kasun Perera"
               maxLength={100}
               value={regForm.fullName}
               onChange={e => setRegForm({ ...regForm, fullName: e.target.value })}
@@ -282,7 +282,7 @@ export default function AuthPanel({ onUser }) {
                 pattern="[a-zA-Z0-9-]{3,40}"
                 minLength={3}
                 maxLength={40}
-                placeholder="e.g. ashan-26"
+                placeholder="e.g. citizen-colombo"
                 value={regForm.username}
                 onChange={e => setRegForm({ ...regForm, username: e.target.value })}
                 required

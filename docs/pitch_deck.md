@@ -1,7 +1,7 @@
 # CodeArena ’26 — Disaster Response Platform
 ## Pitch Deck: Why ➔ What ➔ How ➔ Proof ➔ Judgement
 
-**Team**: Ashan (Sole Active Developer)  
+**Team**: Resilient Lanka (Engineering Team)  
 **Track**: Topic 04 — Disaster Response (Colombo & Kelani Ganga Basin Focus)  
 **Target Deadline**: 13 September 2026, 06:00 Asia/Colombo  
 
@@ -47,11 +47,11 @@ Closure & Open  Family Party Allocation         Audit Trail & Spam Restriction
 ```
 
 - **5 Purpose-Built Workspaces**:
-  1. **Citizen Portal**: Verified registration with Sri Lankan NIC validation, photo + GPS intake, duplicate prevention, real-time hydrological flood warnings, dynamic detour routing, in-app area notifications, and **instant Bilingual localization (English / සිංහල)** for grass-roots community reporting without language barriers.
-  2. **Operations Desk**: Case builder, 5-check evaluation (2 deterministic system checks + 3 multimodal AI checks), incident grouping, road closure control, idempotent crew dispatch, and clarification broadcasting.
+  1. **Citizen Portal**: Verified registration with Sri Lankan NIC validation, photo + GPS intake, duplicate prevention, real-time hydrological flood warnings, dynamic detour routing, in-app area notifications, and **instant Bilingual localization (English / සිංහල)** for grass-roots community reporting without language barriers. *(Evidence: `docs/screenshots/02_citizen_evacuation_routing.png`)*
+  2. **Operations Desk**: Case builder, 5-check evaluation (2 deterministic system checks + 3 multimodal AI checks), incident grouping, road closure control, idempotent crew dispatch, and clarification broadcasting. *(Evidence: `docs/screenshots/01_operations_case_modal.png` & `04_operations_dashboard.png`)*
   3. **Field Crew App**: Assigned work orders, turn-by-turn dispatch notes, and mandatory on-site photo upload before roads can reopen.
-  4. **Relief Operations**: Evacuation shelter management with real-time capacity progress, supply tracking, party-size household allocation (409 overcapacity guard), and interactive hydrological simulation stage control (gradual level increase/decrease).
-  5. **Admin Console**: Version-controlled parameter deployments (rainfall & gauge thresholds), forward rollbacks, human accuracy feedback logging, chronological audit trails, and universal profile management for all 5 roles.
+  4. **Relief Operations**: Evacuation shelter management with real-time capacity progress, supply tracking, party-size household allocation (409 overcapacity guard), and interactive hydrological simulation stage control. *(Evidence: `docs/screenshots/03_relief_shelter_capacity.png`)*
+  5. **Admin Console**: Version-controlled parameter deployments (rainfall & gauge thresholds), forward rollbacks, human accuracy feedback logging, chronological audit trails, and universal profile management for all 5 roles. *(Evidence: `docs/screenshots/05_user_profile_nic_management.png`)*
 
 ---
 
@@ -136,5 +136,5 @@ Closure & Open  Family Party Allocation         Audit Trail & Spam Restriction
 > *"In a disaster, the best technology is not the one that promises magic, but the one that fails gracefully, tells the truth about uncertainty, and coordinates human action with precision."*
 
 - **Project Status**: 100% complete across all 7 technical milestones; 8/8 E2E stages verified; 36/36 unit tests pass; code frozen and presentation-ready.
-- **Developer**: Ashan (Sole Active Developer, Undergrad Computer Engineering).
+- **Team**: Resilient Lanka Engineering Team (Collaborative Engineering).
 - **Codebase**: Fully reproducible via `npm test`, `npm run test:e2e`, and `npm run demo:reset`.

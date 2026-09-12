@@ -153,7 +153,7 @@ export default function ProfileModal({ user, onClose, onUserUpdated }) {
               👤
             </span>
             <div>
-              <h2 className="text-base font-bold leading-tight">My Profile & Security</h2>
+              <h2 className="text-base font-bold leading-tight text-white">My Profile & Security</h2>
               <p className="text-[11px] text-slate-300">
                 Logged in as <strong className="text-sky-300">@{user.username}</strong> ({user.role})
               </p>
@@ -265,7 +265,7 @@ export default function ProfileModal({ user, onClose, onUserUpdated }) {
                   <input
                     id="profFullName"
                     type="text"
-                    placeholder="e.g. Ashan Perera"
+                    placeholder="e.g. Kasun Perera"
                     maxLength={100}
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}

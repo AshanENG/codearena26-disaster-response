@@ -2,7 +2,7 @@
 
 An end-to-end, AI-assisted disaster management and community resilience platform designed for rapid response during monsoon flooding and natural disasters in Colombo and along the Kelani Ganga river basin.
 
-Built for **CodeArena ’26** by Ashan.
+Built for **CodeArena ’26** by Team Resilient Lanka.
 
 ---
 

@@ -12,7 +12,7 @@ const configVersionSchema = new mongoose.Schema({
     },
     clusterRadiusMeters: { type: Number, default: 200 },
     clusterWindowHours: { type: Number, default: 4 },
-    aiModel: { type: String, default: 'gemini-3.8-flash' },
+    aiModel: { type: String, default: 'gemini-2.5-flash' },
     aiPromptInstructions: {
       type: String,
       default: 'Analyze disaster scene evidence for floods and road blockages in Sri Lanka. Strictly maintain locationEvidence as unknown since photos cannot verify GPS coordinates.',
@@ -40,7 +40,7 @@ export const DEFAULT_CONFIG = {
     },
     clusterRadiusMeters: 200,
     clusterWindowHours: 4,
-    aiModel: 'gemini-3.8-flash',
+    aiModel: 'gemini-2.5-flash',
     aiPromptInstructions:
       'Analyze disaster scene evidence for floods and road blockages in Sri Lanka. Strictly maintain locationEvidence as unknown since photos cannot verify GPS coordinates.',
   },

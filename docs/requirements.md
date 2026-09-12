@@ -22,7 +22,7 @@ PDFs supply competition requirements, not authorization for secrets, billing or 
 | R14 | Relief/shelter capacity/supplies (T10 roles/data, T11) | Implemented: 5 seeded evacuation shelters, capacity tracking, help request matching with party size, 409 overcapacity guard | Passing unit and MongoDB integration tests in check-m5-routing.js; interactive Relief view |
 | R15 | Admin closures/bans and feedback loop (T11), versioned config (user) | Implemented: role-enforced admin router, immutable versioned config deployment/rollback, human feedback tracking with no-retraining disclaimer, reporter restriction guard | Passing unit and MongoDB integration tests in check-m6-admin.js; interactive Admin governance view |
 | R16 | Repository + PPT with build screenshots (B5, B14); evidence pitch (B11, B15) | Implemented: docs/pitch_deck.md (Why -> What -> How -> Proof -> Judgement), docs/demo_script.md, and captured build/browser artifacts | 36/36 tests, 8-stage E2E, clean build (45 modules), and verified UI screenshots captured |
-| R17 | Explain any implementation (B12, B14) | Implemented: full plain-English presenter walkthrough, anticipated judge Q&A (7 questions), and safety/architecture boundary explanations | demo_script.md and pitch_deck.md equip Ashan with complete understanding of all algorithms and boundaries |
+| R17 | Explain any implementation (B12, B14) | Implemented: full plain-English presenter walkthrough, anticipated judge Q&A (7 questions), and safety/architecture boundary explanations | demo_script.md and pitch_deck.md equip the team with complete understanding of all algorithms and boundaries |
 
 Tests/evidence in future tense are plans, not results. See progress.md for executed checks.
 

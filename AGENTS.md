@@ -1,7 +1,7 @@
 # CodeArena '26 instructions
 Read docs/requirements.md, docs/decisions.md and docs/progress.md before changing scope. Preserve existing work. Source references use physical PDF pages.
 
-- Ashan is the only active developer in a registered three-person team. Explain each milestone in plain English.
+- Registered three-person development team. Explain each milestone in plain English.
 - Deadline: 2026-09-13 06:00 Asia/Colombo. Recalculate remaining time and protect four presentation/rehearsal hours.
 - React/Vite/Tailwind JavaScript, Express, MongoDB/Mongoose, backend Gemini; npm workspaces client/server; Node 22.18.0. Leaflet and short polling planned.
 - Work the earliest incomplete milestone; distinguish verified, planned and blocked. Do not rebuild working code.

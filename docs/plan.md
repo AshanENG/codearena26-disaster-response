@@ -27,7 +27,7 @@ These are timeboxes, not claims that the work will fit. Drop optional scope befo
 
 At **12 Sep 2026 08:20 Asia/Colombo**, the **13 Sep 06:00** deadline was **21h40m** away. The old 20 build + 4 presentation hours do not fit. Reserve four hours for deck/rehearsal and 40 minutes for submission/buffer: at most **17 hours** remain for build, testing, setup, meals and breaks. This is a wall-clock ceiling, not guaranteed active work time. Recalculate at every checkpoint.
 
-Plan for Ashan alone. Protect rehearsal time; drop optional work first. This is a plan, not an automation.
+Team implementation plan. Protect rehearsal time; drop optional work first. This is a plan, not an automation.
 
 | Latest Sri Lanka checkpoint | Exit gate |
 |---|---|

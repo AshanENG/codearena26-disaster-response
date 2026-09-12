@@ -73,12 +73,12 @@ test('public registration schema rejects role escalation and weak credentials', 
 
   // Full registration schema validation
   assert.ok(registrationSchema.safeParse({
-    username: 'citizen-ashan',
+    username: 'citizen-sample',
     password: 'securePassword123',
     confirmPassword: 'securePassword123',
-    fullName: 'Ashan Perera',
+    fullName: 'Kasun Perera',
     nic: '123456789V',
-    email: 'ashan@example.com',
+    email: 'kasun.perera@example.com',
   }).success);
 
   // Validates 12-digit new NIC

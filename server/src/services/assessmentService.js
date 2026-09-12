@@ -7,7 +7,7 @@ export async function evaluateReport({
   reportsModel,
   photoBuffer = null,
   apiKey = process.env.GEMINI_API_KEY,
-  model = process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+  model = process.env.GEMINI_MODEL || 'gemini-2.5-flash',
   actorId = null,
 }) {
   // 1. Stage 02: Case Builder (System)

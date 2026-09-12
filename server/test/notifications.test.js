@@ -150,9 +150,9 @@ test('sendVerificationCodeEmail formats 6-digit OTP and logs delivery to outbox'
   clearSentEmails();
 
   const res = await sendVerificationCodeEmail({
-    to: 'citizen.ashan@example.com',
+    to: 'citizen.perera@example.com',
     code: '748291',
-    username: 'Ashan Perera',
+    username: 'Kasun Perera',
     purpose: 'registration',
   });
 
@@ -162,10 +162,10 @@ test('sendVerificationCodeEmail formats 6-digit OTP and logs delivery to outbox'
 
   const emails = getSentEmails();
   assert.equal(emails.length, 1);
-  assert.equal(emails[0].to, 'citizen.ashan@example.com');
+  assert.equal(emails[0].to, 'citizen.perera@example.com');
   assert.match(emails[0].subject, /748291/);
   assert.match(emails[0].textBody, /748291/);
-  assert.match(emails[0].textBody, /Ashan Perera/);
+  assert.match(emails[0].textBody, /Kasun Perera/);
 
   // Rejects invalid email
   const fail = await sendVerificationCodeEmail({
