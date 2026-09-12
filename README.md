@@ -87,14 +87,27 @@ The platform enforces strict role-based access control (RBAC) across five specia
 
 ## 🚀 Quickstart & Setup
 
-### Prerequisites
-- **Node.js**: `v22.18.0` (LTS)
-- **MongoDB**: `v6.0+` or `v7.0+` running on `mongodb://127.0.0.1:27017`
+### Prerequisites & Node.js Setup
+- **Node.js**: Recommended `v22.18.0` (or any active Node.js 22.x LTS release; project root includes `.nvmrc`).
+  - Check current version:
+    ```bash
+    node -v
+    ```
+  - If using **nvm** (Node Version Manager) or **fnm**:
+    ```bash
+    nvm install 22.18.0
+    nvm use 22.18.0
+    ```
+  - If Node.js is not yet installed on your system, download Node.js 22 LTS from:  
+    👉 **https://nodejs.org/en/download**
+- **MongoDB**: `v6.0+` or `v7.0+` running on `mongodb://127.0.0.1:27017` (or your MongoDB Atlas connection string).
 
-### 1. Installation
-```powershell
-npm ci
+### 1. Dependency Installation
+This repository is configured with **npm workspaces**. Running `npm install` once from the root directory automatically installs all dependencies across both the backend (`server`) and frontend (`client`):
+```bash
+npm install
 ```
+*(Alternatively, run `npm ci` for a deterministic install from `package-lock.json`).*
 
 ### 2. Environment Configuration
 Verify `server/.env` is present (keys stay backend-only):
@@ -224,6 +237,6 @@ codearena26-disaster-response/
 │   │   ├── reports.js          # Citizen intake & assessment API
 │   │   └── routing.js          # Closure-aware Dijkstra pathfinding API
 │   ├── scripts/                # E2E runner, persistence check, demo seeder
-│   └── test/                   # 32 comprehensive unit tests
+│   └── test/                   # 36 comprehensive unit tests
 └── docs/                       # Requirements, decisions, progress & presentation
 ```
