@@ -51,8 +51,18 @@ export function protectWrites(req, res, next) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
   if (req.get('X-Requested-With') !== 'CodeArena') return res.status(403).json({ error: 'Required request protection header is missing.' });
   if (req.get('Origin')) {
-    try { if (new URL(req.get('Origin')).host !== req.get('Host')) return res.status(403).json({ error: 'Cross-origin writes are not allowed.' }); }
-    catch { return res.status(403).json({ error: 'Invalid request origin.' }); }
+    try {
+      const originUrl = new URL(req.get('Origin'));
+      const host = req.get('Host');
+      const isExactMatch = originUrl.host === host;
+      const isLocalDev = ['localhost', '127.0.0.1', '::1'].includes(originUrl.hostname) &&
+                         (host?.includes('localhost') || host?.includes('127.0.0.1') || host?.includes('::1'));
+      if (!isExactMatch && !isLocalDev) {
+        return res.status(403).json({ error: 'Cross-origin writes are not allowed.' });
+      }
+    } catch {
+      return res.status(403).json({ error: 'Invalid request origin.' });
+    }
   }
   next();
 }

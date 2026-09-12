@@ -58,7 +58,11 @@ export default function Crew() {
         headers: { 'X-Requested-With': 'CodeArena' },
         body: formData,
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data = {};
+      if (text && text.trim().length > 0) {
+        try { data = JSON.parse(text); } catch { data = { error: text }; }
+      }
       if (!res.ok) throw new Error(data.error || 'Failed to close incident.');
 
       setActionMessage('Incident resolved and closed successfully. Public map and citizen statuses updated.');

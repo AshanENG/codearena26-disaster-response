@@ -119,7 +119,23 @@ npm run dev
 ```
 Open **http://127.0.0.1:5173** in your browser. Vite proxies `/api` requests to Express on port `3001`.
 
-### 5. Single-Origin Production Mode
+### 5. Automated PowerShell Service Controls
+Convenient scripts to start, stop, or inspect all background services with a single command:
+```powershell
+# Start all services (Vite + Express), check health, and display URLs
+.\start-services.ps1
+
+# Stop all services and release ports 3001 and 5173
+.\stop-services.ps1
+
+# Check current status of frontend and backend processes
+.\services.ps1 status
+
+# Reset demo database to pristine state and start
+.\start-services.ps1 -ResetDemo
+```
+
+### 6. Single-Origin Production Mode
 To run the full stack on a single origin (port 3001):
 ```powershell
 npm run build
@@ -168,12 +184,14 @@ npm run build
 
 ## 🗺️ Demonstration Credentials
 
-Inspect `server/generated/demo-accounts.json` for active passwords:
-- **Citizen**: `demo-citizen`
-- **Operations Officer**: `demo-officer`
-- **Field Crew**: `demo-crew`
-- **Relief Desk**: `demo-relief`
-- **Administrator**: `demo-admin`
+All 5 demonstration accounts use the simple universal demo password: **`password123`**
+- **Citizen**: `demo-citizen` / `password123`
+- **Operations Officer**: `demo-officer` / `password123`
+- **Field Crew**: `demo-crew` / `password123`
+- **Relief Desk**: `demo-relief` / `password123`
+- **Administrator**: `demo-admin` / `password123`
+
+*(Also recorded in `server/generated/demo-accounts.json`)*
 
 ---
 

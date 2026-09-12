@@ -27,32 +27,30 @@ async function resetDemo() {
   await mkdir(directory, { recursive: true });
 
   // 1. Ensure 5 standard demo accounts
-  let accounts = [];
-  try {
-    accounts = JSON.parse(await readFile(accountFile, 'utf8'));
-  } catch (err) {
-    if (err.code !== 'ENOENT') throw err;
-  }
-
+  const DEMO_PASSWORD = 'password123';
+  const accounts = [];
   const userMap = {};
   for (const role of roles) {
     const username = `demo-${role}`;
+    const passwordHash = await hashPassword(DEMO_PASSWORD);
     let existing = await User.findOne({ username });
     if (!existing) {
-      const password = randomBytes(16).toString('base64url');
       existing = await User.create({
         username,
         role,
         demo: true,
-        passwordHash: await hashPassword(password),
+        passwordHash,
       });
-      accounts = accounts.filter(a => a.username !== username);
-      accounts.push({ username, role, password });
-      await writeFile(accountFile, JSON.stringify(accounts, null, 2) + '\n', { mode: 0o600 });
+    } else {
+      existing.passwordHash = passwordHash;
+      existing.isRestricted = false;
+      await existing.save();
     }
+    accounts.push({ username, role, password: DEMO_PASSWORD });
     userMap[role] = existing;
   }
-  console.log('✓ Demo accounts verified (citizen, officer, crew, relief, admin).');
+  await writeFile(accountFile, JSON.stringify(accounts, null, 2) + '\n', { mode: 0o600 });
+  console.log('✓ Demo accounts verified (citizen, officer, crew, relief, admin) with demo password.');
 
   // 2. Ensure baseline configuration version
   await ensureDefaultConfig();
@@ -66,37 +64,42 @@ async function resetDemo() {
   await setSimulationStage(1);
   console.log('✓ Hydrological monitor set to Stage 1: Active Kelani River Advisory broadcasted.');
 
-  // 5. Seed sample demonstration reports with GridFS photo
+  // 5. Seed sample demonstration reports with real Colombo flood photos in GridFS
   const store = evidenceStore(mongoose.connection);
 
-  // Generate a synthetic demonstration disaster image
-  const photoBuffer = await sharp({
-    create: {
-      width: 640,
-      height: 480,
-      channels: 3,
-      background: { r: 52, g: 101, b: 164 },
-    },
-  })
-    .composite([
-      {
-        input: Buffer.from(
-          `<svg width="640" height="480"><rect x="0" y="240" width="640" height="240" fill="#204a87" fill-opacity="0.8"/><text x="40" y="100" font-family="sans-serif" font-size="28" fill="#ffffff">CODEARENA '26 DEMO EVIDENCE</text><text x="40" y="150" font-family="sans-serif" font-size="20" fill="#fce94f">Nagalagam St Floodwaters Approaching Road Level</text></svg>`
-        ),
-      },
-    ])
-    .jpeg({ quality: 85 })
-    .toBuffer();
+  const nagalagamImgPath = new URL('../src/data/demo-images/flood_nagalagam.jpg', import.meta.url);
+  const baselineImgPath = new URL('../src/data/demo-images/flood_baseline.jpg', import.meta.url);
 
-  const sha256 = createHash('sha256').update(photoBuffer).digest('hex');
+  let nagalagamBuffer;
+  try {
+    nagalagamBuffer = await readFile(nagalagamImgPath);
+  } catch {
+    nagalagamBuffer = await sharp({ create: { width: 640, height: 480, channels: 3, background: '#3465a4' } }).jpeg().toBuffer();
+  }
 
-  // Store photo in GridFS
-  let fileId;
+  let baselineBuffer;
+  try {
+    baselineBuffer = await readFile(baselineImgPath);
+  } catch {
+    baselineBuffer = await sharp({ create: { width: 640, height: 480, channels: 3, background: '#204a87' } }).jpeg().toBuffer();
+  }
+
+  const nagalagamSha = createHash('sha256').update(nagalagamBuffer).digest('hex');
+  const baselineSha = createHash('sha256').update(baselineBuffer).digest('hex');
+
+  // Store photos in GridFS
+  let nagalagamFileId = null;
+  let baselineFileId = null;
   if (store.save) {
-    fileId = await store.save(photoBuffer, {
+    nagalagamFileId = await store.save(nagalagamBuffer, {
       ownerId: String(userMap.citizen._id),
       mimeType: 'image/jpeg',
-      originalName: 'demo-grandpass-flood.jpg',
+      originalName: 'nagalagam-street-flooding.jpg',
+    });
+    baselineFileId = await store.save(baselineBuffer, {
+      ownerId: String(userMap.citizen._id),
+      mimeType: 'image/jpeg',
+      originalName: 'baseline-road-inundation.jpg',
     });
   }
 
@@ -104,22 +107,22 @@ async function resetDemo() {
   await Report.deleteMany({ description: { $regex: /\[DEMO SEED\]/ } });
   await Incident.deleteMany({ title: { $regex: /\[DEMO SEED\]/ } });
 
-  // Create Seeded Hazard Report
+  // Create Seeded Hazard Report 1: Nagalagam Street
   const hazardReport = await Report.create({
     ownerId: userMap.citizen._id,
     kind: 'hazard',
-    description: '[DEMO SEED] Severe water accumulation overflowing onto Nagalagam Street near Kelani riverbank. Water depth ~1.5 feet and rising.',
+    description: '[DEMO SEED] Severe water accumulation overflowing onto Nagalagam Street near Kelani riverbank. Water depth ~1.5 feet, vehicles struggling to pass.',
     latitude: 6.9535,
     longitude: 79.8732,
     locationSource: 'device',
     gpsAccuracy: 12,
     photo: {
-      fileId,
+      fileId: nagalagamFileId,
       mimeType: 'image/jpeg',
-      size: photoBuffer.length,
-      sha256,
-      width: 640,
-      height: 480,
+      size: nagalagamBuffer.length,
+      sha256: nagalagamSha,
+      width: 1024,
+      height: 768,
       exifGps: null,
     },
     status: 'under_review',
@@ -130,7 +133,7 @@ async function resetDemo() {
       evaluator: { type: 'hybrid_system_ai', model: 'gemini-3.8-flash' },
       caseSnapshot: {
         ward: { id: 'ward-grandpass', name: 'Grandpass / Nagalagam Street' },
-        road: { id: 'road-baseline', name: 'Baseline Road', hierarchy: 'arterial' },
+        road: { id: 'road-nagalagam', name: 'Nagalagam Street River Road', hierarchy: 'collector' },
         weatherSnapshot: {
           rainfallRateMmH: 32.0,
           riverGaugeLevelFeet: 5.2,
@@ -143,14 +146,66 @@ async function resetDemo() {
         cluster: { densityClassification: 'clustered', countInRadius: 2 },
         image: { hazardDetected: true, hazardType: 'flood', severity: 'moderate' },
         location: { sceneConsistency: 'consistent_urban_riverbank', locationEvidence: 'unknown' },
-        risk: { roadHierarchy: 'arterial', risingWater: true, lifeSafetyRisk: 'moderate' },
+        risk: { roadHierarchy: 'collector', risingWater: true, lifeSafetyRisk: 'moderate' },
       },
       aggregator: {
         verdict: 'confirmed',
         urgency: 'high',
-        reasons: ['Kelani river gauge alert breached', 'Visual evidence shows active road flooding', 'Arterial transit route affected'],
+        reasons: ['Kelani river gauge alert breached (5.2 ft)', 'Visual evidence shows brown floodwater encroaching shops and roadway', 'Traffic stalled near Grandpass junction'],
         uncertainty: 'Location GPS not independently cryptographically verified; estimated from report metadata.',
         recommendedOutcome: 'published',
+      },
+    },
+    history: [{ action: 'submitted', actorId: userMap.citizen._id, at: new Date() }],
+  });
+
+  // Create Seeded Hazard Report 2: Baseline Road
+  const baselineReport = await Report.create({
+    ownerId: userMap.citizen._id,
+    kind: 'hazard',
+    description: '[DEMO SEED] Baseline Road arterial corridor completely submerged under 2 feet of water. Orange warning barrier deployed, buses and cars halted.',
+    latitude: 6.9450,
+    longitude: 79.8780,
+    locationSource: 'device',
+    gpsAccuracy: 15,
+    photo: {
+      fileId: baselineFileId,
+      mimeType: 'image/jpeg',
+      size: baselineBuffer.length,
+      sha256: baselineSha,
+      width: 1024,
+      height: 768,
+      exifGps: null,
+    },
+    status: 'under_review',
+    locationEvidence: 'unverified',
+    assessment: {
+      status: 'evaluated',
+      evaluatedAt: new Date(),
+      evaluator: { type: 'hybrid_system_ai', model: 'gemini-3.8-flash' },
+      caseSnapshot: {
+        ward: { id: 'ward-grandpass', name: 'Grandpass / Nagalagam Street' },
+        road: { id: 'road-baseline', name: 'Baseline Road (Arterial Corridor)', hierarchy: 'arterial' },
+        weatherSnapshot: {
+          rainfallRateMmH: 42.0,
+          riverGaugeLevelFeet: 5.4,
+          riverStatus: 'alert',
+        },
+        nearbyReportCount: 3,
+      },
+      checks: {
+        weather: { signal: 'supportive', ruleTriggered: 'HEAVY_MONSOON_RAINFALL' },
+        cluster: { densityClassification: 'clustered', countInRadius: 3 },
+        image: { hazardDetected: true, hazardType: 'flood', severity: 'critical' },
+        location: { sceneConsistency: 'consistent_urban_arterial', locationEvidence: 'unknown' },
+        risk: { roadHierarchy: 'arterial', risingWater: true, lifeSafetyRisk: 'critical' },
+      },
+      aggregator: {
+        verdict: 'confirmed',
+        urgency: 'critical',
+        reasons: ['Key arterial highway impassable', 'Knee-deep floodwaters blocking public transit', 'Flash runoff from canal overflow'],
+        uncertainty: 'Location GPS not independently cryptographically verified; estimated from report metadata.',
+        recommendedOutcome: 'area_alert',
       },
     },
     history: [{ action: 'submitted', actorId: userMap.citizen._id, at: new Date() }],
@@ -179,7 +234,7 @@ async function resetDemo() {
     center: { latitude: 6.9535, longitude: 79.8732 },
     ward: { id: 'ward-grandpass', name: 'Grandpass / Nagalagam Street' },
     road: { id: 'road-baseline', name: 'Baseline Road (Arterial Corridor)', hierarchy: 'arterial' },
-    reportIds: [hazardReport._id],
+    reportIds: [hazardReport._id, baselineReport._id],
     dispatch: {
       crewId: userMap.crew._id,
       crewName: 'Field Team Alpha (demo-crew)',

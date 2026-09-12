@@ -21,6 +21,11 @@ export default function Citizen() {
     const url = URL.createObjectURL(photo); setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [photo]);
+
+  const lat = Number(form.latitude);
+  const lon = Number(form.longitude);
+  const point = form.latitude !== '' && form.longitude !== '' && !Number.isNaN(lat) && !Number.isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 ? { latitude: lat, longitude: lon, kind: form.kind } : null;
+
   function edit(changes) { setForm(f => ({ ...f, ...changes })); key.current = crypto.randomUUID(); setMessage(null); }
   function locate() {
     if (!navigator.geolocation) { setGpsMessage('Location is unavailable in this browser. Enter coordinates manually.'); return; }

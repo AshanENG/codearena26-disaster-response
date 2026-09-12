@@ -16,8 +16,14 @@ This step-by-step guide is designed for **Ashan** to deliver a seamless, high-im
    ```
 3. **Open Browser**:
    Navigate to `http://127.0.0.1:5173`.
-4. **Open Demo Credentials File**:
-   Open `server/generated/demo-accounts.json` in VS Code or Notepad to copy passwords quickly.
+4. **Universal Demo Password**:
+   All 5 demo accounts use the same password: **`password123`**
+   - `demo-citizen` / `password123`
+   - `demo-officer` / `password123`
+   - `demo-crew` / `password123`
+   - `demo-relief` / `password123`
+   - `demo-admin` / `password123`
+   *(Also stored locally in `server/generated/demo-accounts.json`)*
 
 ---
 
