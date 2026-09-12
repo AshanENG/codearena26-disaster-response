@@ -6,6 +6,23 @@ Built for **CodeArena ’26** by Team Resilient Lanka.
 
 ---
 
+## 🌐 Live Demonstration & Cloud Deployment
+
+Evaluators and judges can access and test the live, fully operational cloud deployment:
+
+- **Live Application URL**: [https://resilient-lanka.onrender.com/](https://resilient-lanka.onrender.com/)
+- **Universal Demo Password**: `password123`
+
+| Workspace | Username | Role / Demonstration Capabilities |
+| :--- | :--- | :--- |
+| **Citizen Portal** | `demo-citizen` | Authenticated hazard & help intake, live Kelani River alert banner, dynamic safe route navigation |
+| **Operations Desk** | `demo-officer` | AI 5-check triage, evidence review, road closures, incident clustering, crew dispatch |
+| **Field Response Crew** | `demo-crew` | Dispatched assignments, on-site status updates, mandatory photo-verified clearance |
+| **Relief & Shelter Desk** | `demo-relief` | Evacuation center occupancy tracking, emergency supply requests, household cot allocation |
+| **Governance & Admin** | `demo-admin` | Real-time immutable audit trails, emergency threshold versioning, system configuration |
+
+---
+
 ## 🌊 System Overview
 
 During flood disasters in urban Sri Lanka, response teams face three critical bottlenecks:
