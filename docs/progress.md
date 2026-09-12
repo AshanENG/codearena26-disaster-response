@@ -1,7 +1,22 @@
 # Verified progress — 12 September 2026
 
+## Milestone 8 — pitch deck, demo script & scenario verification
+Implemented and verified in the actual local clone:
+- **Pitch Deck (`docs/pitch_deck.md`)**: Complete Why → What → How → Proof → Judgement structure with accurate test counts (36/36), build metrics (45 modules), and all 5 workspace descriptions including NIC registration, profile management, and notification system.
+- **Live Demo Script (`docs/demo_script.md`)**: Step-by-step presenter guide for a 5–7 minute live walkthrough covering all 5 roles, anticipated judge Q&A (7 questions), and pre-demo checklist.
+- **Scenario Matrix Verified**: All credible-flood, missing-location, routing, closure, crew, shelter, and role-enforcement scenarios now marked PASS in `docs/requirements.md`. Irrelevant-photo is AI-dependent (Gemini smoke test passed at M3).
+- **Competition Readiness Review**: All 17 requirements (R01–R17) confirmed implemented; 36/36 tests pass; build passes; E2E passes.
+
+### Milestone 8 checks actually run
+- `npm test`: **36/36 PASSED** (unit, schema, security, spatial, NIC, OTP, notification proximity, and role tests).
+- `npm run build`: **PASSED** (45 modules, JS 504 kB / 145 kB gzip, CSS 60 kB / 15 kB gzip).
+
+### Remaining / next
+Pre-presentation: run `npm run demo:reset`, start dev server, walkthrough demo script once. Then 4-hour English rehearsal window protecting the 06:00 deadline.
+
+
 ## Milestone 7 — end-to-end scenario verification, demo reset & code freeze
-Implemented and verified in the actual local clone, fulfilling all technical and testing requirements across Milestones 1 through 6:
+
 - **Comprehensive 8-Stage E2E Scenario Runner (R16)** (`server/scripts/check-m7-e2e.js`, `npm run test:e2e`):
   - **Stage 01 (Intake)**: Authenticated citizen multipart photo upload with Sharp-generated image, GPS coordinates, and submission key deduplication.
   - **Stage 02 (Case Builder)**: Automated spatial mapping to Colombo wards/roads (Grandpass / Baseline Road), hydrological snapshot join, and cluster analysis.

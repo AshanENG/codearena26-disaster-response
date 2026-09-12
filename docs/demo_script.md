@@ -132,4 +132,8 @@ This step-by-step guide is designed for **Ashan** to deliver a seamless, high-im
 
 ### Q5: *"How did you build and verify all this as the only active developer?"*
 > **Ashan's Answer**:  
-> *"By focusing on disciplined architecture and automated verification. Every milestone was anchored by automated test suites. We have 32 offline unit tests, real MongoDB GridFS persistence tests, and an 8-stage live end-to-end integration test (`npm run test:e2e`) that exercises the entire pipeline from upload to shelter allocation."*
+> *"By focusing on disciplined architecture and automated verification. Every milestone was anchored by automated test suites. We have 36/36 offline unit and security tests verifying CSRF/Origin enforcement, NIC format validation, email OTP, notification proximity, routing algorithms, and RBAC guards, alongside real MongoDB GridFS persistence tests, and an 8-stage live end-to-end integration test (`npm run test:e2e`) that exercises the entire pipeline from upload to shelter allocation."*
+
+### Q6: *"How does the platform handle citizen registration and NIC validation?"*
+> **Ashan's Answer**:  
+> *"We enforce strict validation for Sri Lankan National Identity Cards (NICs), supporting both legacy 9-digit (with V/X) and modern 12-digit formats. Combined with email OTP verification, this ensures trustworthy citizen onboarding while preventing duplicate or fraudulent accounts."*

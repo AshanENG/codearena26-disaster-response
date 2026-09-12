@@ -47,11 +47,11 @@ Closure & Open  Family Party Allocation         Audit Trail & Spam Restriction
 ```
 
 - **5 Purpose-Built Workspaces**:
-  1. **Citizen Portal**: Photo + GPS intake with duplicate prevention, real-time hydrological flood warnings, and dynamic detour routing.
-  2. **Operations Desk**: Case builder, 5-check evaluation (2 deterministic system checks + 3 multimodal AI checks), incident grouping, road closure control, and idempotent crew dispatch.
+  1. **Citizen Portal**: Verified registration with Sri Lankan NIC validation, photo + GPS intake, duplicate prevention, real-time hydrological flood warnings, dynamic detour routing, and in-app area notifications when nearby incidents are confirmed.
+  2. **Operations Desk**: Case builder, 5-check evaluation (2 deterministic system checks + 3 multimodal AI checks), incident grouping, road closure control, idempotent crew dispatch, and clarification broadcasting.
   3. **Field Crew App**: Assigned work orders, turn-by-turn dispatch notes, and mandatory on-site photo upload before roads can reopen.
-  4. **Relief Operations**: Evacuation shelter management with real-time capacity progress, supply tracking, and party-size household allocation (with 409 overcapacity guard).
-  5. **Admin Console**: Version-controlled parameter deployments (rainfall & gauge thresholds), forward rollbacks, human accuracy feedback logging, and chronological audit trails.
+  4. **Relief Operations**: Evacuation shelter management with real-time capacity progress, supply tracking, party-size household allocation (409 overcapacity guard), and interactive hydrological simulation stage control (gradual level increase/decrease).
+  5. **Admin Console**: Version-controlled parameter deployments (rainfall & gauge thresholds), forward rollbacks, human accuracy feedback logging, chronological audit trails, and universal profile management for all 5 roles.
 
 ---
 
@@ -93,16 +93,16 @@ Closure & Open  Family Party Allocation         Audit Trail & Spam Restriction
 ## SLIDE 6: PROOF — Automated Verification & Live Evidence
 ### **Hard Proof: 100% Passing Automated Test Suite**
 
-1. **32/32 Offline Unit & Security Tests (`npm test`)**:
-   - Tests CSRF/Origin enforcement, input sanitization, scrypt password hashing, session tokens, spatial mapping, weather rules, cluster algorithms, Dijkstra routing, and RBAC guards.
+1. **36/36 Offline Unit & Security Tests (`npm test`)**:
+   - Tests CSRF/Origin enforcement, input sanitization, scrypt password hashing, session tokens, spatial mapping, weather rules, cluster algorithms, Dijkstra routing, RBAC guards, NIC format validation, email OTP generation, and notification proximity checks.
 2. **Real MongoDB Persistence Suite (`npm run test:persistence`)**:
    - Verified against live MongoDB and GridFS: multipart binary streams, SHA-256 matching, idempotent duplicate deduplication, and database reconnection recovery.
 3. **8-Stage End-to-End Scenario Suite (`npm run test:e2e`)**:
-   - Automated script executing the entire crisis lifecycle from citizen photo upload, case building, AI evaluation, road closure, Dijkstra detour routing, clarification loop, crew photo closure, shelter allocation, to admin audit logging.
+   - Automated script executing the entire crisis lifecycle from citizen photo upload, case building, AI evaluation, road closure, Dijkstra detour routing, clarification loop, crew photo closure, shelter allocation, to admin audit logging. **All credible-flood, closure-aware routing, and crew-resolution scenarios VERIFIED PASS.**
 4. **Reproducible Demo Seeder (`npm run demo:reset`)**:
    - Seeds all 5 demo accounts, deploys Version 1 configuration, populates shelters, and sets active hydrological advisories in seconds.
 5. **Zero-Error Client Production Build (`npm run build`)**:
-   - 43 modules bundled cleanly with zero warnings.
+   - 45 modules bundled cleanly. JS 504 kB / 145 kB gzip, CSS 60 kB / 15 kB gzip.
 
 ---
 
@@ -135,6 +135,6 @@ Closure & Open  Family Party Allocation         Audit Trail & Spam Restriction
 
 > *"In a disaster, the best technology is not the one that promises magic, but the one that fails gracefully, tells the truth about uncertainty, and coordinates human action with precision."*
 
-- **Project Status**: 100% complete across all 7 technical milestones; 8/8 E2E stages verified; code frozen and presentation-ready.
+- **Project Status**: 100% complete across all 7 technical milestones; 8/8 E2E stages verified; 36/36 unit tests pass; code frozen and presentation-ready.
 - **Developer**: Ashan (Sole Active Developer, Undergrad Computer Engineering).
 - **Codebase**: Fully reproducible via `npm test`, `npm run test:e2e`, and `npm run demo:reset`.

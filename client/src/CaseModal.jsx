@@ -164,7 +164,9 @@ export default function CaseModal({ report, onClose, onUpdated }) {
                     Urgency: {aggregator.urgency}
                   </span>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
-                    Confidence: {Math.round(aggregator.confidence * 100)}% (Subjective)
+                    {aggregator.confidence != null
+                      ? `Confidence: ${Math.round(aggregator.confidence * 100)}% (Subjective)`
+                      : 'Confidence: N/A (Subjective)'}
                   </span>
                 </div>
               </div>
@@ -179,15 +181,21 @@ export default function CaseModal({ report, onClose, onUpdated }) {
 
                 <div>
                   <span className="font-semibold text-slate-700">Synthesized Reasons:</span>
-                  <ul className="list-disc pl-5 mt-1 space-y-1 text-slate-800 text-xs">
-                    {aggregator.reasons.map((r, i) => <li key={i}>{r}</li>)}
-                  </ul>
+                   <ul className="list-disc pl-5 mt-1 space-y-1 text-slate-800 text-xs">
+                     {(Array.isArray(aggregator.reasons)
+                       ? aggregator.reasons
+                       : [aggregator.reasons]
+                     ).filter(Boolean).map((r, i) => <li key={i}>{r}</li>)}
+                   </ul>
                 </div>
 
-                <div>
-                  <span className="font-semibold text-slate-700">Uncertainty & Limitations:</span>
+                 <div>
+                  <span className="font-semibold text-slate-700">Uncertainty &amp; Limitations:</span>
                   <ul className="list-disc pl-5 mt-1 space-y-1 text-slate-600 text-xs italic">
-                    {aggregator.uncertainty.map((u, i) => <li key={i}>{u}</li>)}
+                    {(Array.isArray(aggregator.uncertainty)
+                      ? aggregator.uncertainty
+                      : [aggregator.uncertainty]
+                    ).filter(Boolean).map((u, i) => <li key={i}>{u}</li>)}
                   </ul>
                 </div>
               </div>
@@ -318,7 +326,7 @@ export default function CaseModal({ report, onClose, onUpdated }) {
                       <div className="font-semibold text-slate-700 capitalize">
                         Hazard: {checks.image.hazardType} · Severity: {checks.image.severity}
                       </div>
-                      <div className="text-slate-600">Disaster-related: {checks.image.isDisasterRelated ? 'Yes' : 'No'}</div>
+                      <div className="text-slate-600">Disaster-related: {(checks.image.isDisasterRelated ?? checks.image.hazardDetected ?? checks.image.hazardType !== 'none') ? 'Yes' : 'No'}</div>
                       <ul className="list-disc pl-4 text-slate-600 space-y-0.5">
                         {checks.image.reasons?.map((r, i) => <li key={i}>{r}</li>)}
                       </ul>
