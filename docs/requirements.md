@@ -7,7 +7,7 @@ PDFs supply competition requirements, not authorization for secrets, billing or 
 | ID | Requirement/source | Current implementation and remaining work | Test / demo evidence |
 |---|---|---|---|
 | R01 | Hazard AND help requests with photo/GPS (T10 #1, T11) | Implemented: authenticated hazard/help form, private GridFS photo, device GPS/manual fallback, source/accuracy and original metadata | Real API/browser uploads, bytes/hash, refresh/process restart passed; device GPS and denial browser-emulated, real hardware fix still unverified |
-| R02 | Independent mock weather/river warnings (T10 #2, T11) | Planned persisted replay and provisional warnings without reports | Weather-only scenario, one warning/recipient set, simulated label |
+| R02 | Independent mock weather/river warnings (T10 #2, T11) | Implemented: 4-stage hydrological feed replay, Nagalagam/Hanwella gauge thresholds, proactive alerts without reports | Passing unit and MongoDB integration tests in check-m5-routing.js; citizen warning banner |
 | R03 | Case builder joins road/ward/nearby reports (T3 stage2, T11) | Implemented: spatial lookup mapping to Colombo/Kelani wards & roads, MongoDB 200m/4h cluster query, and weather snapshot | Passing unit tests and live MongoDB integration tests in check-m3-assessment.js |
 | R04 | Weather SYSTEM check (T10 #3, T11) | Implemented: deterministic rule-based evaluation of rainfall rate, 3h rainfall, and Kelani river flood thresholds | Passing boundary unit tests for supportive, contradictory, and missing feed |
 | R05 | Cluster SYSTEM check (T10 #3, T11: 200m, recent hours) | Implemented: Haversine distance spatial check within 200m over 4 hours, classifying isolated vs clustered reports | Passing unit tests and MongoDB multi-report queries |
@@ -16,11 +16,11 @@ PDFs supply competition requirements, not authorization for secrets, billing or 
 | R08 | RISK AI: road type, people, rising water (T11) | Implemented: contextual evaluation rating life safety risk, rising water, and arterial road hierarchy | Schema and unit tests for urgency levels and risk factors |
 | R09 | AI aggregator verdict/urgency (T11), reasons/confidence (T3), uncertainty (user) | Implemented: synthesizes all 5 signals into verdict (confirmed/verify/reject), urgency, reasons, confidence, uncertainty | Passing aggregator schema tests, failure handling tests, and Operations UI modal |
 | R10 | Clarification, publication, area alert, human ticket (T3, T11) | Implemented: officer clarification loops broadcasted to citizens, community response flow, and road closure toggle | Passing unit and MongoDB integration tests in check-m4-flow.js |
-| R11 | Confirmed flood alerts/routes to affected users (T10 #4, T11) | Planned area membership, dedup notifications and demo-graph routes | Closed edge changes path; all paths blocked -> no route |
+| R11 | Confirmed flood alerts/routes to affected users (T10 #4, T11) | Implemented: Dijkstra graph routing avoiding closed roads with detour notice; explicit NO_SAFE_ROUTE_AVAILABLE; disclaimer | Passing unit and MongoDB integration tests in check-m5-routing.js; interactive RoutingWidget |
 | R12 | Officer review/dispatch (T10 roles, T11) | Implemented: officer incident grouping, crew unit dispatch with instructions, and duplicate dispatch prevention (409) | Role protection, duplicate prevention, and linked report status transition passed |
 | R13 | Crew photo closure updates public map/citizen (T10 #5, T11; citizen status user) | Implemented: assigned crew closure with mandatory GridFS completion photo, road reopening, and citizen status resolution | Real MongoDB photo upload, role enforcement (403 for unauthorized), and report status update passed |
-| R14 | Relief/shelter capacity/supplies (T10 roles/data, T11) | Partial: role-scoped help intake queue; allocation/capacity/supplies planned; optimized shelter routing stretch | Help-only visibility/photo access passed; allocation/capacity tests pending |
-| R15 | Admin closures/bans and feedback loop (T11), versioned config (user) | Planned audited role-protected changes; not retraining | Version history linked to feedback; unauthorized updates denied |
+| R14 | Relief/shelter capacity/supplies (T10 roles/data, T11) | Implemented: 5 seeded evacuation shelters, capacity tracking, help request matching with party size, 409 overcapacity guard | Passing unit and MongoDB integration tests in check-m5-routing.js; interactive Relief view |
+| R15 | Admin closures/bans and feedback loop (T11), versioned config (user) | Implemented: role-enforced admin router, immutable versioned config deployment/rollback, human feedback tracking with no-retraining disclaimer, reporter restriction guard | Passing unit and MongoDB integration tests in check-m6-admin.js; interactive Admin governance view |
 | R16 | Repository + PPT with build screenshots (B5, B14); evidence pitch (B11, B15) | Partial M1/M2 code/docs and actual screenshots; deck/submission pending | Desktop/mobile intake/private-queue images captured; final submission pending |
 | R17 | Explain any implementation (B12, B14) | M1/M2 plain-English walkthrough and judge answers provided; Ashan rehearsal and later explanations pending | Cover auth, evidence storage, hashing, GPS limits, AI boundary; rehearse later algorithms when implemented |
 
@@ -43,11 +43,11 @@ Nationwide intake but limited labelled simulated operational areas; report/incid
 | Credible flood | R01,R03-R09 | Pending integrated/live flow |
 | Missing location | R07 | Smoke schema enforced; full case pending |
 | Irrelevant photo | R06 | Pending |
-| Nearby reports / one incident | R05,R12 | Pending |
-| Weather-only warning | R02 | Pending |
-| Closure changes route / no path | R11 | Pending |
-| Crew closure updates views | R13 | Pending |
-| AI timeout | R06-R09 | CLI timeout configured; review/retry pending |
-| Repeated action no duplicate | R10-R12 | Submission retries passed, including concurrent requests; dispatch/alert idempotency pending |
-| Unauthorized role rejected | R12,R15 | Report/photo ownership, crew denial and relief scope passed; future action checks pending |
+| Nearby reports / one incident | R05,R12 | PASS: report grouping and linked incident updates verified in check-m4-flow.js |
+| Weather-only warning | R02 | PASS: hydrological threshold warnings without citizen reports in check-m5-routing.js |
+| Closure changes route / no path | R11 | PASS: Dijkstra detour avoiding closed road and explicit NO_SAFE_ROUTE_AVAILABLE in check-m5-routing.js |
+| Crew closure updates views | R13 | PASS: photo closure in GridFS, road reopening, citizen report resolved in check-m4-flow.js |
+| AI timeout | R06-R09 | CLI timeout configured; safe failed status and manual retry verified |
+| Repeated action no duplicate | R10-R12 | PASS: submission key deduplication and 409 duplicate dispatch rejection verified |
+| Unauthorized role rejected | R12,R14,R15 | PASS: crew 403 on closure, citizen 403 on relief allocation, citizen 403 on evaluate |
 | Persistence refresh/restart | R01 | PASS: real MongoDB/GridFS reports, original photos and session after browser refresh + Node process restart |

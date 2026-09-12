@@ -1,101 +1,211 @@
-# codearena26-disaster-response
-AI-assisted disaster response platform for Sri Lanka: citizen hazard reporting, evidence verification, early warnings, route guidance, and coordinated emergency response. Built for CodeArena ’26.
+# CodeArena ’26 — Resilient Disaster Response Platform
 
-The introduction describes the intended full project. **Current implementation: milestones 1–2, foundation and private evidence intake.** The five AI/system checks, incidents, public warnings/routes, dispatch, closure and relief allocation are not implemented yet.
+An end-to-end, AI-assisted disaster management and community resilience platform designed for rapid response during monsoon flooding and natural disasters in Colombo and along the Kelani Ganga river basin.
 
-## Setup on Windows / Antigravity
-Use Node.js 22.18.0 and npm workspaces. npm 11.1.0 is suitable; checks in the Codex sandbox use npm 10.9.3.
+Built for **CodeArena ’26** by Ashan.
 
+---
+
+## 🌊 System Overview
+
+During flood disasters in urban Sri Lanka, response teams face three critical bottlenecks:
+1. **Unstructured & Duplicate Information**: Call centers and dispatchers are inundated with unverified phone calls and vague text messages.
+2. **Disconnected Verification & Routing**: First responders lack verified ground truth, and routing tools direct vehicles into flooded arterial roads.
+3. **Siloed Agency Workflows**: Intake, dispatch, field crews, evacuation shelters, and policy administrators operate on disparate, non-synchronized tools.
+
+This platform bridges this divide by integrating **authenticated citizen reporting**, **deterministic hydrological and cluster analysis**, **multimodal AI triage**, **closure-aware Dijkstra route guidance**, **tamper-evident field crew photo closures**, **shelter capacity management**, and **audited governance**.
+
+---
+
+## 🏛️ Architecture & End-to-End Pipeline
+
+```
+ [Citizen Intake] ──► [MongoDB GridFS] (Raw bytes + SHA-256)
+        │
+        ▼
+ [Case Builder]   ──► Ward & Road Spatial Lookup (Grandpass, Wellampitiya, Baseline Rd)
+        │         ──► Hydrological Weather Snapshot (Nagalagam St & Hanwella gauges)
+        │         ──► Spatial-Temporal Cluster Query (200m radius, 4hr window)
+        │
+        ▼
+ [5 Triangulation Checks]
+   ├─ 1. System Weather Check   (Deterministic rainfall & river threshold logic)
+   ├─ 2. System Cluster Check   (Deterministic spatio-temporal density clustering)
+   ├─ 3. AI Image Check         (Gemini multimodal damage & flood depth evaluation)
+   ├─ 4. AI Location Check      (Scene plausibility; preserves locationEvidence: 'unknown')
+   └─ 5. AI Risk Check          (Criticality, road hierarchy, rising water hazard)
+        │
+        ▼
+ [Reasoned Hazard Aggregator] ──► Verdict, Urgency, Reasons, Uncertainty & Recommendation
+        │
+        ▼
+ [Operations Management]      ──► Incident Grouping & Road Closure (Baseline Road)
+        │                     ──► Community Clarification Inquiries
+        │                     ──► Crew Dispatch (Idempotent 409 guard)
+        │
+   ┌────┴─────────────────────────────┬───────────────────────────────┐
+   ▼                                  ▼                               ▼
+[Dynamic Routing]              [Field Crew Closure]          [Relief Desk Shelters]
+Dijkstra shortest path         Mandatory GridFS photo        Evacuation shelter allocation
+Avoids closed roads            Reopens road network          Household party size tracking
+Explicit detour warning        Resolves linked reports       Overcapacity 409 guard
+Safety disclaimer              Tamper-evident audit trail    Supply & resource checklist
+```
+
+---
+
+## 👥 Five Role-Scoped Workspaces
+
+The platform enforces strict role-based access control (RBAC) across five specialized interfaces:
+
+| Role | Responsibility | Primary Capabilities |
+|---|---|---|
+| **Citizen** | Community Reporting & Safety | Submit photo + GPS hazard/help reports; receive early flood warnings; calculate safe detour routes; view shelter availability. |
+| **Operations Officer** | Verification & Dispatch | Review incoming cases; trigger 5-check AI evaluations; broadcast clarification questions; group incidents; close roads; dispatch crews. |
+| **Field Crew** | Physical Hazard Resolution | Receive dispatched work orders with instructions; upload mandatory on-site completion photos; reopen roads; resolve hazards. |
+| **Relief Desk** | Evacuation & Resource Coordination | View community help requests; assign displaced citizens and families to shelters with party size validation; monitor shelter capacity and supplies. |
+| **System Administrator** | Governance & Feedback | Audit chronological operational event trails; manage versioned rule/prompt configurations; inspect human accuracy reviews; restrict misbehaving accounts. |
+
+---
+
+## 🛡️ Core Engineering Decisions & Guardrails
+
+1. **AI Recommends; Backend Rules & Authorized Humans Decide**:
+   AI does not close roads, dispatch crews, or publish public warnings autonomously. Consequential state changes require human officer authorization.
+2. **Never Fake Live AI Outputs**:
+   If Gemini API quota is exhausted, the network disconnects, or an error occurs, the system records `assessment.status: 'failed'` and flags the report for manual officer review. It never generates synthetic fake responses.
+3. **Preservation of Unknown Ground Truth**:
+   Photographs cannot cryptographically verify GPS coordinates. The system strictly records `locationEvidence: 'unknown'` and marks report coordinates as `unverified` unless independently confirmed.
+4. **Closure-Aware Routing Safety Disclaimer**:
+   The Dijkstra routing engine strictly omits road segments marked `isRoadClosed: true` and calculates alternative detours. If no viable corridor exists, it explicitly reports `NO_SAFE_ROUTE_AVAILABLE`. The system displays an explicit disclaimer: *Graph routing never guarantees real-world safety*.
+5. **No Online Model Retraining**:
+   Staff review logs and feedback records capture human assessment accuracy for prompt tuning and rule calibration. They are explicitly labelled: *Configuration adjustments, not model retraining*.
+6. **Secure Media & Storage Isolation**:
+   Photos are stored in MongoDB GridFS with SHA-256 hashes and decrypted/streamed only via authenticated, role-verified endpoints. No raw GridFS IDs or public static upload directories are ever exposed.
+
+---
+
+## 🚀 Quickstart & Setup
+
+### Prerequisites
+- **Node.js**: `v22.18.0` (LTS)
+- **MongoDB**: `v6.0+` or `v7.0+` running on `mongodb://127.0.0.1:27017`
+
+### 1. Installation
 ```powershell
 npm ci
-# Only if server/.env does not already exist:
-Copy-Item server/.env.example server/.env
-npm run seed:demo
+```
+
+### 2. Environment Configuration
+Verify `server/.env` is present (keys stay backend-only):
+```ini
+PORT=3001
+MONGODB_URI=mongodb://127.0.0.1:27017/disaster_response
+SESSION_SECRET=your-secure-session-secret
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-3.8-flash
+```
+
+### 3. Initialize Pristine Demonstration Data
+Populate all 5 roles, baseline configuration, seeded flood incidents, and evacuation shelters:
+```powershell
+npm run demo:reset
+```
+*Demo passwords are generated into `server/generated/demo-accounts.json` (an ignored local file). Inspect this file to retrieve the sign-in passwords for all 5 roles.*
+
+### 4. Run Development Servers
+```powershell
 npm run dev
 ```
+Open **http://127.0.0.1:5173** in your browser. Vite proxies `/api` requests to Express on port `3001`.
 
-Preserve your existing server/.env. MONGODB_URI, GEMINI_API_KEY and GEMINI_MODEL are backend-only. A real MongoDB is required for reports, images, accounts and sessions. The verified Gemini model is gemini-3.8-flash. Never paste credentials into chat, frontend variables, Git or screenshots. Google AI Pro is not proof of API quota.
-
-Open http://127.0.0.1:5173. Vite proxies /api to port 3001. If changing the backend port, update the proxy. The server loads server/.env independently of the terminal directory. Missing/unavailable MongoDB produces 503; there is no memory fallback.
-
-The sandbox's default npm launcher may reference a missing roaming installation. Alternative:
-```powershell
-node "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js" run build
-```
-Use the same direct CLI for other npm commands if needed. No global npm settings were changed.
-
-## Sign-in and demonstration accounts
-Register through the app to create a **citizen** account. Public registration cannot set a staff role. Passwords must be 10–128 characters; usernames are 3–40 letters/numbers/hyphens.
-
-`npm run seed:demo` creates demo-citizen, demo-officer, demo-crew, demo-relief and demo-admin only if absent. Random passwords are written to **server/generated/demo-accounts.json**, an ignored local file. Open it locally in your editor; passwords are never printed. Existing accounts/passwords are not reset. These are explicitly labelled demonstration identities, not an unauthenticated role switch. If an existing account's password file is lost, no automatic reset is performed.
-
-| Role | Backend permission now |
-|---|---|
-| Citizen | Submit hazard/help with photo; list/read only own reports and photos |
-| Officer / Admin | Read all report evidence, including preserved ownerless foundation records |
-| Relief | Read help requests and their photos only |
-| Crew | Sign in; no report access until assignments are implemented |
-
-Crew/Admin workflow views remain labelled unfinished. Relief has a help intake queue, not shelter/supply allocation yet. Navigation never grants a role. Legacy ownerless reports are preserved for staff; no citizen can claim them.
-
-Sessions use random 256-bit tokens in HttpOnly, SameSite=Lax cookies; only token hashes are stored in MongoDB. Sessions expire after 12 hours and are revoked on logout. Passwords use salted Node scrypt. API writes require X-Requested-With: CodeArena and reject mismatched Origin. No CORS is enabled. Login and upload rate limits are process-local, suitable for this single-process prototype; multi-instance/proxy deployment needs further review.
-
-## Photo / GPS reporting
-1. Sign in as a citizen. Choose hazard or help, a help category if applicable, and a description.
-2. Select a JPEG, PNG or WebP (up to 5 MiB, 20 megapixels, non-animated). The server decodes the bytes; filename/MIME alone is not trusted.
-3. Use device location or enter coordinates. Permission denial/timeout leaves a manual fallback; no coordinates are guessed. Device location normally requires HTTPS or localhost.
-4. Review the point on the map, then submit. Original image bytes and EXIF are retained privately in MongoDB GridFS; the Report stores the file ID, SHA-256, metadata and submission audit event. Missing photo GPS remains unknown. GPS/metadata are not proof of location.
-5. My reports shows only your records; the map shows the current page, not nationwide coverage. Staff sees the appropriate queue. Lists poll every 10 seconds while visible.
-6. Refresh or restart the server: report, photo and session persist. An unchanged retry reuses its submission key; a reused key with different evidence returns 409.
-
-Original photos are served only through an ownership/role-checked route, never a public uploads folder. Existing text-only records remain readable by staff. All **new** reports require a photo and authentication; the old anonymous JSON POST is intentionally no longer supported.
-
-GridFS avoids dependence on ephemeral host disk. It still consumes MongoDB storage and needs database backups. Report creation and GridFS upload are separate writes: normal failures/duplicates clean up the new file; an abrupt process crash between writes may leave an orphan. File metadata includes owner/submission IDs for later maintenance; no automatic deletion of unrelated evidence occurs.
-
-Basemap tiles come from OpenStreetMap with attribution through Leaflet; internet is required. Tile failure leaves the coordinate list available. Pins are private, unverified submissions, not confirmed incidents, warnings or safe-route advice. No seeded operational areas or road-routing coverage are claimed in this milestone.
-
-## Commands
-| Command | Purpose |
-|---|---|
-| npm run dev | Vite and Express together |
-| npm run build | Compile React into ignored client/dist |
-| npm start | Express; also serves build when SERVE_CLIENT=true |
-| npm test | Offline/unit/HTTP security, validation, model, image and schema checks |
-| npm run test:persistence | Real MongoDB/GridFS integration, roles/ownership, retries and reconnection; cleans only test-owned data |
-| npm run seed:demo | Provision missing local demo identities; never reset existing accounts |
-| npm run smoke:gemini -- "C:/absolute/path/image.jpg" | Opt-in live backend Gemini image call |
-
-### Single-origin built mode
-If the Codex sandbox blocks esbuild's development optimizer, the production build works:
+### 5. Single-Origin Production Mode
+To run the full stack on a single origin (port 3001):
 ```powershell
 npm run build
 $env:SERVE_CLIENT = 'true'
 npm start
 ```
-Open http://127.0.0.1:3001. Set NODE_ENV=production only with HTTPS: session cookies then use Secure. See docs/deployment.md. No public deployment or paid service was enabled.
+Navigate to **http://127.0.0.1:3001**.
 
-## API contracts
-- GET /api/health: 200 only when MongoDB connected, otherwise 503; non-sensitive readiness.
-- POST /api/auth/register or /login: JSON username/password, protected write header; returns user and sets cookie. Registration creates citizens only.
-- GET /api/auth/me: current user or null. POST /api/auth/logout revokes the session.
-- POST /api/reports: authenticated citizen, multipart field **report** (JSON) plus file **photo**. JSON fields: kind (hazard/help), description, latitude, longitude, locationSource (manual/device), submissionKey (UUID), optional gpsAccuracy for device, helpCategory required for help. Unknown fields rejected. 201 created; 200 exact replay; 409 conflicting key.
-- GET /api/reports?limit=20&offset=0&kind=help: authenticated role-scoped page; limit 1–100, offset 0–100000, optional kind. Returns reports/hasMore/limit/offset.
-- GET /api/reports/:id and /:id/photo: same ownership/role checks. Other citizens receive 404. Anonymous requests receive 401; crew is denied 403.
-- Common errors: 400 invalid content; 413 too large; 415 wrong upload type; 429 rate limit; 503 storage failure. Errors do not echo secrets or raw database/provider details.
+---
 
-## Gemini boundary
-server/src/ai/gemini.js uses the official @google/genai Interactions API, image input, JSON response_format, store=false and Zod validation. The [official structured output guide](https://ai.google.dev/gemini-api/docs/structured-output) describes this interface. The earlier generateContent endpoint returned 404 during real verification and was replaced.
+## 🧪 Verification & Test Suite
 
-The CLI explicitly sends the specified image to Google using existing configured quota. It returns hazard/risk/reasons/uncertainty/confidence and unknown location evidence. Confidence is subjective, not calibrated accuracy. A screenshot live smoke test passed; disaster-photo classification accuracy and the five-check aggregator remain unverified. No public API route invokes Gemini yet.
+The platform includes comprehensive offline unit tests, real MongoDB persistence tests, and an 8-stage end-to-end scenario runner:
 
-## Code map / explanation
-- client/src/main.jsx: shell, session and role-specific views.
-- Citizen.jsx: photo/GPS/form; ReportQueue.jsx: polling and pagination; ReportMap.jsx: Leaflet; AuthPanel.jsx: sign-in.
-- server/src/auth.js: hashing, sessions, authentication and role helpers.
-- reports.js: upload validation, scoped queries, deduplication and protected downloads.
-- evidence.js: decode/hash/EXIF and GridFS; models/: User, Session, Report.
-- scripts/check-persistence.js: real integration checks; scripts/seed-demo-accounts.js: labelled demo identities.
-- docs/requirements.md: PDF requirement -> implementation -> test -> demo evidence.
-- docs/progress.md, plan.md, decisions.md and walkthrough.md: verified status, remaining work and presenter notes.
+```powershell
+# 1. Run all 32 offline unit, schema, security, and algorithmic tests
+npm test
 
-Citizen -> authenticated multipart request -> backend validation -> GridFS original image + Mongoose Report -> private polling queue. Photos and session data survive backend restarts because MongoDB stores them, not React state.
+# 2. Run the complete 8-stage end-to-end integration scenario (real MongoDB & live API)
+npm run test:e2e
+
+# 3. Test real MongoDB GridFS storage, session persistence, and reconnect resilience
+npm run test:persistence
+
+# 4. Test hydrological simulation feed replay and Dijkstra graph routing (Milestone 5)
+npm run test:m5
+
+# 5. Test versioned configurations, feedback loops, and admin moderation (Milestone 6)
+npm run test:m6
+
+# 6. Verify client production build
+npm run build
+```
+
+### End-to-End Scenario Matrix (8 Verified Stages)
+1. **Citizen Intake**: Multipart photo upload, client GPS, and idempotency key deduplication.
+2. **Case Builder**: Automated spatial mapping to Colombo wards/roads, weather snapshot join, and cluster analysis.
+3. **Report Assessment**: Five-check evaluation pipeline execution with graceful failure handling.
+4. **Incident Grouping**: Officer creates operational incident and marks Baseline Road corridor CLOSED.
+5. **Dijkstra Routing**: Graph routing recalculates path from Grandpass to Borella, cleanly avoiding Baseline Road with detour guidance.
+6. **Community Clarification**: Officer issues on-the-ground inquiry; citizen submits verification observation.
+7. **Crew Dispatch & Photo Closure**: Dispatched field crew submits mandatory resolution photo to GridFS; road is reopened and linked citizen report marked resolved.
+8. **Relief & Governance**: Displaced family assigned to evacuation shelter with capacity check; administrative audit trail verified.
+
+---
+
+## 🗺️ Demonstration Credentials
+
+Inspect `server/generated/demo-accounts.json` for active passwords:
+- **Citizen**: `demo-citizen`
+- **Operations Officer**: `demo-officer`
+- **Field Crew**: `demo-crew`
+- **Relief Desk**: `demo-relief`
+- **Administrator**: `demo-admin`
+
+---
+
+## 📁 Repository Structure
+
+```
+codearena26-disaster-response/
+├── client/                     # React 19 + Vite frontend
+│   ├── src/
+│   │   ├── Admin.jsx           # Versioning, feedback & audit dashboard
+│   │   ├── AuthPanel.jsx       # Scrypt cookie-based authentication
+│   │   ├── CaseModal.jsx       # Operations 5-check evaluation modal
+│   │   ├── Citizen.jsx         # Intake form, early warnings, route widget
+│   │   ├── Crew.jsx            # Field work order & photo resolution view
+│   │   ├── Relief.jsx          # Evacuation shelter capacity & help queue
+│   │   ├── ReportMap.jsx       # Leaflet interactive geospatial map
+│   │   ├── RoutingWidget.jsx   # Safe detour route calculator
+│   │   └── main.jsx            # Role routing & application shell
+├── server/                     # Express 5 + Node.js backend
+│   ├── src/
+│   │   ├── ai/gemini.js        # Gemini multimodal structured checks
+│   │   ├── models/             # Mongoose schemas (User, Report, Incident, Alert, Shelter, ConfigVersion, Feedback)
+│   │   ├── services/           # CaseBuilder, SystemChecks, RoutingService, FeedReplayService
+│   │   ├── admin.js            # Governance & configuration API
+│   │   ├── alerts.js           # Hydrological warning endpoints
+│   │   ├── auth.js             # Password hashing & session management
+│   │   ├── evidence.js         # Sharp pixel validation & GridFS storage
+│   │   ├── incidents.js        # Operational dispatch & photo closure API
+│   │   ├── relief.js           # Shelter allocation & capacity API
+│   │   ├── reports.js          # Citizen intake & assessment API
+│   │   └── routing.js          # Closure-aware Dijkstra pathfinding API
+│   ├── scripts/                # E2E runner, persistence check, demo seeder
+│   └── test/                   # 32 comprehensive unit tests
+└── docs/                       # Requirements, decisions, progress & presentation
+```

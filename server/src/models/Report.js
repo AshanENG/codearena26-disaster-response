@@ -28,6 +28,15 @@ const reportSchema = new mongoose.Schema({
     evaluator: { type: mongoose.Schema.Types.Mixed },
     error: String,
   },
+  reliefAssignment: {
+    shelterId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shelter' },
+    shelterName: String,
+    assignedAt: Date,
+    assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    partySize: { type: Number, default: 1 },
+    status: { type: String, enum: ['unassigned', 'assigned', 'sheltered'], default: 'unassigned' },
+    notes: String,
+  },
 }, { timestamps: true, bufferCommands: false, versionKey: false });
 reportSchema.index({ createdAt: -1, _id: -1 });
 reportSchema.index({ 'assessment.status': 1 });

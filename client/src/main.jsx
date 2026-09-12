@@ -6,6 +6,8 @@ import AuthPanel from './AuthPanel.jsx';
 import Citizen from './Citizen.jsx';
 import ReportQueue from './ReportQueue.jsx';
 import Crew from './Crew.jsx';
+import Relief from './Relief.jsx';
+import Admin from './Admin.jsx';
 
 const views = ['Citizen', 'Operations', 'Crew', 'Relief', 'Admin'];
 function App() {
@@ -44,13 +46,13 @@ function App() {
     if (view === 'Citizen' && user.role === 'citizen') return <Citizen />;
     if (view === 'Operations' && ['officer', 'admin'].includes(user.role)) return <ReportQueue title="Report inbox" />;
     if (view === 'Crew' && ['crew', 'officer', 'admin'].includes(user.role)) return <Crew />;
-    if (view === 'Relief' && ['relief', 'officer', 'admin'].includes(user.role)) return <><p className="notice">Help intake is available. Shelter assignment, supplies and relief dispatch are not implemented yet.</p><ReportQueue helpOnly title="Help request queue" /></>;
-    if (view === 'Admin' && user.role === 'admin') return <section className="panel empty"><span className="badge">Not implemented</span><h2 className="mt-4">Admin controls are planned</h2><p className="muted">Human feedback, configuration history and closure controls follow in later milestones.</p></section>;
+    if (view === 'Relief' && ['relief', 'officer', 'admin'].includes(user.role)) return <Relief />;
+    if (view === 'Admin' && user.role === 'admin') return <Admin />;
     return <section className="panel"><span className="badge">Access restricted</span><h2 className="mt-4">This view requires a different role</h2><p className="muted">You are signed in as {user.role}. The server independently enforces access. Sign out to use another authorized account.</p></section>;
   }
-  return <div className="min-h-screen"><a href="#main" className="skip">Skip to content</a><header className="border-b border-slate-200 bg-white"><div className="mx-auto max-w-7xl px-5 py-5 flex flex-wrap items-center justify-between gap-4"><a href="#citizen" className="flex items-center gap-3 font-bold text-lg"><span className="brand">+</span><span>Disaster Response<span className="block text-xs font-normal tracking-widest text-slate-500">CODEARENA ’26 · SRI LANKA</span></span></a><div className="flex flex-wrap items-center gap-3"><span className="badge">Milestone 04 / Response chain</span>{user && <><span className="text-xs">{user.username} · {user.role}{user.demo ? ' · demo account' : ''}</span><button className="secondary" onClick={signOut}>Sign out</button></>}</div></div></header>
+  return <div className="min-h-screen"><a href="#main" className="skip">Skip to content</a><header className="border-b border-slate-200 bg-white"><div className="mx-auto max-w-7xl px-5 py-5 flex flex-wrap items-center justify-between gap-4"><a href="#citizen" className="flex items-center gap-3 font-bold text-lg"><span className="brand">+</span><span>Disaster Response<span className="block text-xs font-normal tracking-widest text-slate-500">CODEARENA ’26 · SRI LANKA</span></span></a><div className="flex flex-wrap items-center gap-3"><span className="badge">Milestone 06 / Audited Admin Controls & Governance</span>{user && <><span className="text-xs">{user.username} · {user.role}{user.demo ? ' · demo account' : ''}</span><button className="secondary" onClick={signOut}>Sign out</button></>}</div></div></header>
     <div className="mx-auto max-w-7xl md:grid md:grid-cols-[205px_1fr]"><nav aria-label="Main navigation" className="p-5 md:pt-9 flex gap-2 overflow-x-auto md:flex-col">{views.map((name, index) => <a key={name} href={`#${name.toLowerCase()}`} aria-current={view === name ? 'page' : undefined} className={`nav-link ${view === name ? 'active' : ''}`}><span className="opacity-50 text-xs">0{index + 1}</span> {name}</a>)}</nav><main id="main" className="px-5 pt-4 pb-12 md:pt-9 min-w-0"><div className="eyebrow">REPORT · REVIEW · RESPOND</div><h1>{view === 'Citizen' ? 'Every report matters.' : view === 'Operations' ? 'Understand what’s reported.' : `${view} workspace`}</h1><p className="muted mb-7">A foundation for coordinated disaster response across Sri Lanka.</p><div className="system mb-6" role="status"><span className={`dot ${health?.ready ? 'online' : ''}`} />{!health ? 'Checking services…' : health.server === 'unavailable' ? 'Server unavailable' : `Server ready · Database ${health.database?.status || 'unknown'}`}</div>
     {authError && <p role="alert" className="notice error mb-5">{authError}</p>}{content()}
-    <footer className="mt-8 text-xs text-slate-500">Competition prototype. Reports are not monitored for emergency dispatch. Private report maps show unverified submissions; confirmed public hazards, warnings and routes are not available yet.</footer></main></div></div>;
+    <footer className="mt-8 text-xs text-slate-500">Competition prototype. Reports are not monitored for emergency dispatch. Verified warnings, closure-aware safe routes, and emergency shelter allocations are active for simulated demo corridors. Never guarantees real-world safety.</footer></main></div></div>;
 }
 createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);

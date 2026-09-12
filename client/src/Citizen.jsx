@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { request } from './api.js';
 import ReportMap from './ReportMap.jsx';
 import ReportQueue from './ReportQueue.jsx';
+import RoutingWidget from './RoutingWidget.jsx';
 const initial = () => ({ kind: 'hazard', helpCategory: 'rescue', description: '', latitude: '', longitude: '', locationSource: 'manual', gpsAccuracy: undefined });
 export default function Citizen() {
   const [form, setForm] = useState(initial);
@@ -12,6 +13,7 @@ export default function Citizen() {
   const [message, setMessage] = useState(null);
   const [gpsMessage, setGpsMessage] = useState('');
   const [refresh, setRefresh] = useState(0);
+  const [alerts, setAlerts] = useState([]);
   const fileInput = useRef(null);
   const key = useRef(crypto.randomUUID());
   useEffect(() => {
@@ -63,6 +65,10 @@ export default function Citizen() {
       }
       setClarifications(allClars);
     }).catch(() => {});
+    request('/api/alerts').then(data => {
+      if (!active) return;
+      setAlerts(data.alerts || []);
+    }).catch(() => {});
     return () => { active = false; };
   }, [refresh]);
 
@@ -85,6 +91,47 @@ export default function Citizen() {
   }
 
   return <><div className="grid gap-6 lg:grid-cols-[1fr_280px]"><section className="panel"><div className="eyebrow">CITIZEN REPORTING</div><h2>What’s happening nearby?</h2><p className="muted mb-5">Report a hazard or ask for help with a photo and location. Your submission is private to you and authorized staff.</p>
+    {alerts.length > 0 && (
+      <div className="mb-6 space-y-3">
+        {alerts.map(a => (
+          <div
+            key={a._id || a.title}
+            className={`p-4 rounded-xl border ${
+              a.severity === 'danger'
+                ? 'bg-rose-50 border-rose-400 text-rose-950'
+                : a.severity === 'warning'
+                ? 'bg-amber-50 border-amber-400 text-amber-950'
+                : 'bg-sky-50 border-sky-400 text-sky-950'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <span
+                className={`badge text-xs font-bold uppercase ${
+                  a.severity === 'danger'
+                    ? 'bg-rose-200 text-rose-900 border-rose-400'
+                    : a.severity === 'warning'
+                    ? 'bg-amber-200 text-amber-900 border-amber-400'
+                    : 'bg-sky-200 text-sky-900 border-sky-400'
+                }`}
+              >
+                {a.severity === 'danger' ? 'CRITICAL DANGER' : a.severity === 'warning' ? 'FLOOD WARNING' : 'ADVISORY'}
+              </span>
+              <h3 className="font-bold text-sm">{a.title}</h3>
+            </div>
+            <div className="text-xs opacity-80 mb-2">
+              Source: {a.source} · Trigger: {a.trigger?.stationName} ({a.trigger?.value} ft)
+            </div>
+            {a.recommendations?.length > 0 && (
+              <ul className="list-disc list-inside text-xs space-y-0.5">
+                {a.recommendations.map((rec, i) => (
+                  <li key={i}>{rec}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
     {clarifications.length > 0 && (
       <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg space-y-3">
         <div className="flex items-center gap-2">
@@ -144,5 +191,6 @@ export default function Citizen() {
       <button className="primary" disabled={saving || locating}>{saving ? 'Saving report and photo…' : 'Submit report →'}</button>
     </fieldset>{message && <p role={message.error ? 'alert' : 'status'} className={message.error ? 'notice error' : 'notice'}>{message.text}</p>}</form>
   </section><aside className="space-y-5"><section className="panel dark"><div className="eyebrow">STAGE 01–06 · HUMAN RESPONSE CHAIN</div><h3>Verified reports. Dispatched crews.</h3><p>Reports are clustered into incidents, evaluated by AI & sensor rules, and dispatched to field crews who close hazards with photos.</p></section><section className="panel"><span className="badge bg-emerald-100 text-emerald-800">OPERATIONAL CLOSURE</span><h3>Safe hazard clearance</h3><p className="muted">When crews upload photo proof of road clearance, hazard warnings clear and public routes re-open automatically.</p></section></aside></div>
+  <div className="my-6"><RoutingWidget /></div>
   <ReportQueue own title="My reports and help requests" refreshKey={refresh} /></>;
 }

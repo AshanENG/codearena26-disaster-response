@@ -1,5 +1,72 @@
 # Verified progress — 12 September 2026
 
+## Milestone 7 — end-to-end scenario verification, demo reset & code freeze
+Implemented and verified in the actual local clone, fulfilling all technical and testing requirements across Milestones 1 through 6:
+- **Comprehensive 8-Stage E2E Scenario Runner (R16)** (`server/scripts/check-m7-e2e.js`, `npm run test:e2e`):
+  - **Stage 01 (Intake)**: Authenticated citizen multipart photo upload with Sharp-generated image, GPS coordinates, and submission key deduplication.
+  - **Stage 02 (Case Builder)**: Automated spatial mapping to Colombo wards/roads (Grandpass / Baseline Road), hydrological snapshot join, and cluster analysis.
+  - **Stage 03 (Assessment)**: Triangulation pipeline execution; validates graceful failure handling without synthetic hallucinations.
+  - **Stage 04 (Incident Grouping)**: Officer creates operational incident linking the report and marks Baseline Road corridor CLOSED.
+  - **Stage 05 (Closure-Aware Routing)**: Dijkstra shortest-path navigation calculates detour route from Grandpass to Borella, cleanly avoiding Baseline Road via Nagalagam -> Low-Level -> Dematagoda Link.
+  - **Stage 06 (Clarification Loop)**: Officer broadcasts localized verification inquiry; citizen responds with on-the-ground observation.
+  - **Stage 07 (Crew Dispatch & Photo Closure)**: Officer dispatches field crew; crew submits mandatory on-site completion photo stored in GridFS; road is reopened and linked citizen report transitions to `status: 'resolved'`.
+  - **Stage 08 (Relief & Governance Audit)**: Help request assigned to evacuation shelter with party size tracking; admin audit log verifies captured chronological event trail.
+- **Pristine Demonstration Database Reset (R16)** (`server/scripts/demo-reset.js`, `npm run demo:reset`):
+  Cleans and provisions demo accounts for all 5 roles (`server/generated/demo-accounts.json`), seeds baseline configuration Version 1, populates designated Colombo evacuation shelters with capacity tracking, broadcasts Stage 1 river advisory, seeds an active Baseline Road flood incident, and queues a shelter help request for the Relief Desk.
+- **README & Architecture Overhaul**: Complete documentation of the full disaster response system, 5 role workspaces, pipeline diagram, test commands, and demonstration credentials.
+
+### Milestone 7 checks actually run
+- `npm test`: **32/32 PASSED** (all unit, schema, security, algorithmic, and role tests).
+- `npm run test:e2e`: **PASSED** against real MongoDB and live HTTP endpoints across all 8 stages.
+- `npm run demo:reset`: **PASSED** (exit code 0; database left in pristine presentation-ready state).
+- `npm run test:m6`: **PASSED** against real MongoDB (`check-m6-admin.js`).
+- `npm run test:m5`: **PASSED** against real MongoDB (`check-m5-routing.js`).
+- `npm run test:m4`: **PASSED** against real MongoDB and GridFS (`check-m4-flow.js`).
+- `npm run test:persistence`: **PASSED** against real MongoDB and GridFS (`check-persistence.js`).
+- `npm run build`: **PASSED** (43 modules transformed, zero build errors or warnings).
+
+### Remaining / next
+M8: Pitch deck creation (`docs/pitch_deck.md`), demonstration script, and timed English presentation rehearsal (protecting the final 4 rehearsal hours before the 2026-09-13 06:00 Asia/Colombo deadline).
+
+## Milestone 6 — audited admin controls, versioned config & feedback loop
+Implemented in the actual local clone, satisfying Topic 04 requirements (T10 roles/data, T11 stage 06, R15):
+- **Audited Admin Role Enforcement (R15)** (`server/src/admin.js`): Governance endpoints strictly require `role === 'admin'`. Unauthorized requests by citizens, field crew, relief workers, and operations officers are rejected with HTTP 403 Forbidden.
+- **Immutable Versioned Configuration & Rollbacks (R15)** (`server/src/models/ConfigVersion.js`): System parameters (rainfall rate thresholds, river gauge flood alert levels, cluster spatio-temporal radius/window, and Gemini operational prompt guidelines) are stored in immutable versioned records in MongoDB. Deploying a new version increments version numbers, deactivates older versions, and logs the deploying administrator and change summary. Rollback creates a new version restoring prior parameters with explicit lineage. Explicitly documented: *changes tune deterministic rules and prompts; models are never retrained online*.
+- **Human Review Feedback Loop (R15)** (`server/src/models/Feedback.js`): Staff can log review overrides on AI assessments (tagging false positives, missed hazards, severity misjudgments, and scene mismatches). Every feedback record links to the active configuration version to inform human prompt/rule tuning, carrying the required disclaimer: *"Human feedback informs versioned prompt and deterministic rule adjustments. Model weights are not retrained live."*
+- **Reporter Moderation & Restriction Guard (R15)** (`server/src/models/User.js`, `server/src/reports.js`): Administrators can restrict citizen accounts for repeated spam. Restricted citizens are immediately denied report submissions with HTTP 403 Forbidden. Fellow admin accounts are protected against restriction.
+- **Unified Chronological Audit Trail (R15)**: Aggregates config deployments, incident overrides, human review logs, and reporter moderation events into a single audit query.
+- **Admin Workspace Dashboard UI** (`client/src/Admin.jsx`): Replaced placeholder with an interactive governance panel including active parameter cards, version deployment form, rollback history timeline, human feedback analytics, and live audit event stream.
+
+### Milestone 6 checks actually run
+- `npm test`: **32/32 passed** (all API, auth, M2, M3, M4, M5, and M6 admin/config/feedback tests).
+- `npm run test:m6`: **PASSED** against real MongoDB (`check-m6-admin.js`), verifying admin role enforcement (403 for citizens/officers, 200 for admin), version deployment (V1 -> V2), clean rollback (V2 -> V3), human feedback logging with disclaimer, reporter restriction enforcement (403 on submission), and unified audit stream.
+- `npm run test:m5`: **PASSED** against real MongoDB (`check-m5-routing.js`).
+- `npm run test:m4`: **PASSED** against real MongoDB and GridFS (`check-m4-flow.js`).
+- `npm run test:persistence`: **PASSED** against real MongoDB and GridFS (`check-persistence.js`).
+- `npm run build`: **PASSED** (43 modules transformed, zero build errors or warnings).
+
+### Remaining / next
+M7: End-to-end scenario verification, real build screenshots, README update, and demo reset script (R16).
+M8: Pitch deck preparation (Why -> What -> How -> Proof -> Judgement) and English Q&A presentation rehearsal (R16, R17).
+
+## Milestone 5 — feed replay, proactive alerts, closure-aware routing & relief desk
+Implemented in the actual local clone, satisfying Topic 04 requirements (T10 #2, #4, #6, T11 stages 04, 05, 06):
+- **Mock Weather & River Feed Replay (R02)** (`server/src/services/feedReplayService.js`, `server/src/models/Alert.js`, `server/src/alerts.js`): Persisted timeline simulator stepping through four discrete hydrological stages (normal baseline, upstream surge advisory, minor flood spillage, critical major flood inundation). Sensor threshold breaches (e.g. Nagalagam Street gauge > 5.0ft alert / 7.0ft minor flood / 8.0ft major flood) trigger provisional warnings with affected wards and civil defence advice independently of citizen submissions. All warnings are tagged `SIMULATED HYDROLOGICAL ALERT`.
+- **Closure-Aware Graph Routing Engine (R11)** (`server/src/services/routingService.js`, `server/src/routing.js`, `client/src/RoutingWidget.jsx`): Dijkstra shortest-path navigation over a simulated graph network connecting Colombo and Kelani basin hubs (Modara, Grandpass, Peliyagoda, Wellampitiya, Kolonnawa, Borella, Cinnamon Gardens). Dynamically queries active road-closing incidents (`isRoadClosed: true`) and routes around hazards with active detour notifications. When severe flooding isolates a ward, Dijkstra detects the impassable graph and gracefully returns an explicit `NO_SAFE_ROUTE_AVAILABLE` response. Every route carries the mandatory safety disclaimer: *"SIMULATED DEMO ONLY - NEVER GUARANTEES REAL-WORLD SAFETY."*
+- **Relief Operations Desk & Shelter Capacity (R14)** (`server/src/models/Shelter.js`, `server/src/relief.js`, `client/src/Relief.jsx`): 5 seeded evacuation shelters across Colombo flood zones with real-time capacity gauges, occupancy tracking, and supply checklists. Relief officers can match citizen help requests (`rescue`, `medical`, `food`, `shelter`) to open shelters, record household party size, and track remaining space. Over-allocation is strictly blocked with HTTP 409 Conflict.
+- **Frontend Integration**: Citizen view embeds real-time hydrological warnings and the interactive `RoutingWidget`. Navigation includes the dedicated `Relief` workspace for relief coordinators and officers.
+
+### Milestone 5 checks actually run
+- `npm test`: **29/29 passed** (all API, auth, M2, M3, M4, and M5 feed/routing/shelter unit tests).
+- `npm run test:m5`: **PASSED** against real MongoDB (`check-m5-routing.js`), verifying feed stage transitions, advisory alert generation, baseline route calculation, dynamic detour around closed `road-baseline`, graceful `NO_SAFE_ROUTE_AVAILABLE` error handling when all bridges close, shelter allocation, overcapacity 409 guard, and citizen 403 authorization guard.
+- `npm run test:m4`: **PASSED** against real MongoDB and GridFS (`check-m4-flow.js`).
+- `npm run test:persistence`: **PASSED** against real MongoDB and GridFS (`check-persistence.js`).
+- `npm run build`: **PASSED** (42 modules transformed, zero build errors or warnings).
+
+### Remaining / next
+M6: Admin controls, versioned prompt/rule configuration, human feedback tracking (R15).
+Later: M7 final end-to-end rehearsal and code freeze, M8 pitch deck preparation and English presentation rehearsal.
+
 ## Milestone 4 — incident grouping, clarification, dispatch & crew closure
 Implemented in the actual local clone, satisfying Topic 04 requirements (T10 #4, #5, T11 stages 05 & 06):
 - **Incident Data Model** (`server/src/models/Incident.js`): Distinct architectural separation between individual citizen submissions/evidence (`Report`) and operational events (`Incident`). Supports grouping multiple reports, centroid calculation, ward/road mapping, and bidirectional linking (`report.incidentId`).

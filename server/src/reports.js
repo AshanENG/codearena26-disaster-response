@@ -42,6 +42,7 @@ export function reportsRouter({ reports = Report, storage = evidenceStore() } = 
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_PHOTO_BYTES, files: 1, fields: 1, fieldSize: 8192, parts: 3 } }).single('photo');
   const throttle = rateLimit({ windowMs: 60 * 1000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many uploads. Please wait a minute.' } });
   router.post('/', allow('citizen'), throttle, (req, res, next) => {
+    if (req.user?.isRestricted) return res.status(403).json({ error: 'Your account has been administratively restricted from submitting reports.' });
     if (!req.is('multipart/form-data')) return res.status(415).json({ error: 'Submit multipart form data with one photo and one report JSON field.' });
     upload(req, res, next);
   }, async (req, res) => {

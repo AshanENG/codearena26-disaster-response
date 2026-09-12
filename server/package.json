@@ -10,6 +10,10 @@
     "test:persistence": "node scripts/check-persistence.js",
     "test:m3": "node scripts/check-m3-assessment.js",
     "test:m4": "node scripts/check-m4-flow.js",
+    "test:m5": "node scripts/check-m5-routing.js",
+    "test:m6": "node scripts/check-m6-admin.js",
+    "test:e2e": "node scripts/check-m7-e2e.js",
+    "demo:reset": "node scripts/demo-reset.js",
     "smoke:gemini": "node scripts/gemini-smoke.js",
     "seed:demo": "node scripts/seed-demo-accounts.js",
     "test:integration": "node scripts/check-persistence.js"

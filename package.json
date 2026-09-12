@@ -16,6 +16,10 @@
     "test": "npm run test -w server",
     "test:persistence": "npm run test:persistence -w server",
     "test:m4": "npm run test:m4 -w server",
+    "test:m5": "npm run test:m5 -w server",
+    "test:m6": "npm run test:m6 -w server",
+    "test:e2e": "npm run test:e2e -w server",
+    "demo:reset": "npm run demo:reset -w server",
     "smoke:gemini": "npm run smoke:gemini -w server --",
     "seed:demo": "npm run seed:demo -w server"
   },

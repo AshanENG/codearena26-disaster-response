@@ -5,5 +5,7 @@ const schema = new mongoose.Schema({
   passwordHash: { type: String, required: true, select: false },
   role: { type: String, enum: roles, default: 'citizen', required: true },
   demo: { type: Boolean, default: false },
+  isRestricted: { type: Boolean, default: false },
+  restrictionReason: { type: String, default: '' },
 }, { timestamps: true, bufferCommands: false });
 export const User = mongoose.model('User', schema);

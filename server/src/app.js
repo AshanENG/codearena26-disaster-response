@@ -6,7 +6,12 @@ import path from 'node:path';
 import { authRouter, identify, requireUser, protectWrites } from './auth.js';
 import { reportsRouter } from './reports.js';
 import { incidentsRouter } from './incidents.js';
+import { alertsRouter } from './alerts.js';
+import { routingRouter } from './routing.js';
+import { reliefRouter } from './relief.js';
+import { adminRouter } from './admin.js';
 import { evidenceStore } from './evidence.js';
+import { allow } from './auth.js';
 
 // Injection supports isolated HTTP contract tests; production always uses Mongoose.
 export function createApp({ reports = Report, incidents = Incident, connection = mongoose.connection, databaseConfigured = false, clientDirectory } = {}) {
@@ -29,6 +34,10 @@ export function createApp({ reports = Report, incidents = Incident, connection =
   app.use('/api/auth', requireDatabase, authRouter());
   app.use('/api/reports', requireDatabase, identify, requireUser, reportsRouter({ reports, storage: evidenceStore(connection) }));
   app.use('/api/incidents', requireDatabase, identify, requireUser, incidentsRouter({ incidents, reports, storage: evidenceStore(connection) }));
+  app.use('/api', identify, alertsRouter({ requireAuth: requireUser, requireRole: roles => allow(...roles) }));
+  app.use('/api/routing', routingRouter());
+  app.use('/api/relief', requireDatabase, identify, reliefRouter({ requireAuth: requireUser, requireRole: roles => allow(...roles) }));
+  app.use('/api/admin', requireDatabase, identify, adminRouter({ requireAuth: requireUser, requireRole: roles => allow(...roles) }));
   // Optional single-process hosting: API and built React assets share one origin.
   // Unknown API routes must never fall through to the frontend HTML.
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));
