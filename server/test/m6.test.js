@@ -10,7 +10,7 @@ test('ConfigVersion model initializes with valid parameters and tracks immutable
   assert.equal(DEFAULT_CONFIG.parameters.weatherThresholds.alertMmH, 30);
   assert.equal(DEFAULT_CONFIG.parameters.clusterRadiusMeters, 200);
   assert.equal(DEFAULT_CONFIG.parameters.clusterWindowHours, 4);
-  assert.equal(DEFAULT_CONFIG.parameters.aiModel, 'gemini-2.5-flash');
+  assert.equal(DEFAULT_CONFIG.parameters.aiModel, 'gemini-3.8-flash');
   assert.match(DEFAULT_CONFIG.parameters.aiPromptInstructions, /unknown/);
 });
 

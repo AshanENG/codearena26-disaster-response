@@ -15,7 +15,7 @@ services:
       - key: HOST
         value: 0.0.0.0
       - key: GEMINI_MODEL
-        value: gemini-2.5-flash
+        value: gemini-3.8-flash
       - key: MONGODB_URI
         sync: false
       - key: GEMINI_API_KEY
